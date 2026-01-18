@@ -7,6 +7,23 @@ export const NumberTypeSchema = v.picklist(['float', 'double']);
 export type NumberType = v.InferOutput<typeof NumberTypeSchema>;
 
 /**
+ * Array transform option - controls how TypeScript arrays (T[], Array<T>) map to C#
+ * - 'array': Native C# arrays (T[])
+ * - 'list': System.Collections.Generic.List<T> (default)
+ * - 'godot-array': Godot.Collections.Array<T>
+ */
+export const ArrayTransformSchema = v.picklist(['array', 'list', 'godot-array']);
+export type ArrayTransform = v.InferOutput<typeof ArrayTransformSchema>;
+
+/**
+ * TypedArray transform option - controls how TypeScript TypedArrays map to C#
+ * - 'array': Native C# arrays with appropriate element type (default)
+ * - 'span': System.Span<T> for memory-efficient access
+ */
+export const TypedArrayTransformSchema = v.picklist(['array', 'span']);
+export type TypedArrayTransform = v.InferOutput<typeof TypedArrayTransformSchema>;
+
+/**
  * Type mappings from TypeScript types to C# types
  */
 export const TypeMappingsSchema = v.object({
@@ -43,6 +60,21 @@ export const TranspilerConfigSchema = v.object({
    * - 'double': 64-bit, matches JavaScript precision
    */
   numberType: v.optional(NumberTypeSchema, 'float'),
+  
+  /**
+   * How to transform TypeScript arrays (T[], Array<T>) to C#.
+   * - 'list': System.Collections.Generic.List<T> (default)
+   * - 'array': Native C# arrays (T[])
+   * - 'godot-array': Godot.Collections.Array<T>
+   */
+  arrayTransform: v.optional(ArrayTransformSchema, 'list'),
+  
+  /**
+   * How to transform TypeScript TypedArrays (Int32Array, Float64Array, etc.) to C#.
+   * - 'array': Native C# arrays with appropriate element type (default)
+   * - 'span': System.Span<T> for memory-efficient access
+   */
+  typedArrayTransform: v.optional(TypedArrayTransformSchema, 'array'),
   
   /** Custom type mappings from TS to C# (overrides defaults) */
   typeMappings: v.optional(TypeMappingsSchema),
@@ -96,6 +128,10 @@ export interface ResolvedTypeMappings {
   void: string;
   null: string;
   undefined: string;
+  
+  // Array transformation settings
+  arrayTransform: ArrayTransform;
+  typedArrayTransform: TypedArrayTransform;
 }
 
 /**
@@ -114,6 +150,10 @@ export function getTypeMappings(config: TranspilerConfig): ResolvedTypeMappings 
     void: customMappings?.void ?? 'void',
     null: customMappings?.null ?? 'null',
     undefined: customMappings?.undefined ?? 'null',
+    
+    // Array transformation settings
+    arrayTransform: config.arrayTransform ?? 'list',
+    typedArrayTransform: config.typedArrayTransform ?? 'array',
   };
 }
 

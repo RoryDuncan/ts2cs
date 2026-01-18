@@ -16,41 +16,86 @@ import { expectCSharp, GENERATED_HEADER } from '../helpers.js';
 
 describe('Discriminated Unions', () => {
   describe('Basic discriminated union', () => {
-    it.todo('should transpile simple shape union with kind discriminant', () => {
-      // type Shape =
-      //   | { kind: 'circle'; radius: number }
-      //   | { kind: 'square'; size: number };
-      //
-      // ->
-      //
-      // public abstract partial class Shape
-      // {
-      //     public abstract string Kind { get; }
-      // }
-      //
-      // public partial class Circle : Shape
-      // {
-      //     public override string Kind => "circle";
-      //     public double radius;
-      // }
-      //
-      // public partial class Square : Shape
-      // {
-      //     public override string Kind => "square";
-      //     public double size;
-      // }
+    it('should transpile simple shape union with kind discriminant', () => {
+      const input = `type Shape =
+  | { kind: 'circle'; radius: number }
+  | { kind: 'square'; size: number };`;
+
+      const expected = `${GENERATED_HEADER}
+
+public abstract partial class Shape
+{
+    public abstract string Kind { get; }
+}
+
+public partial class Circle : Shape
+{
+    public override string Kind => "circle";
+    public float radius;
+}
+
+public partial class Square : Shape
+{
+    public override string Kind => "square";
+    public float size;
+}`;
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should transpile union with type discriminant', () => {
-      // type Event =
-      //   | { type: 'click'; x: number; y: number }
-      //   | { type: 'keypress'; key: string };
+    it('should transpile union with type discriminant', () => {
+      const input = `type Event =
+  | { type: 'click'; x: number; y: number }
+  | { type: 'keypress'; key: string };`;
+
+      const expected = `${GENERATED_HEADER}
+
+public abstract partial class Event
+{
+    public abstract string Type { get; }
+}
+
+public partial class Click : Event
+{
+    public override string Type => "click";
+    public float x;
+    public float y;
+}
+
+public partial class Keypress : Event
+{
+    public override string Type => "keypress";
+    public string key;
+}`;
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should transpile union with status discriminant', () => {
-      // type Result =
-      //   | { status: 'success'; data: string }
-      //   | { status: 'error'; message: string };
+    it('should transpile union with status discriminant', () => {
+      const input = `type Result =
+  | { status: 'success'; data: string }
+  | { status: 'error'; message: string };`;
+
+      const expected = `${GENERATED_HEADER}
+
+public abstract partial class Result
+{
+    public abstract string Status { get; }
+}
+
+public partial class Success : Result
+{
+    public override string Status => "success";
+    public string data;
+}
+
+public partial class Error : Result
+{
+    public override string Status => "error";
+    public string message;
+}`;
+
+      expectCSharp(input, expected);
     });
   });
 

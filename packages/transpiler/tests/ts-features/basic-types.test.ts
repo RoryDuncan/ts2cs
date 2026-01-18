@@ -22,6 +22,18 @@ function getDoubleMappings() {
   return getTypeMappings(config);
 }
 
+// Helper to get type mappings with native array transform
+function getArrayMappings() {
+  const config = parseConfig({ inputDir: './src', outputDir: './out', arrayTransform: 'array' });
+  return getTypeMappings(config);
+}
+
+// Helper to get type mappings with double and native arrays
+function getDoubleArrayMappings() {
+  const config = parseConfig({ inputDir: './src', outputDir: './out', numberType: 'double', arrayTransform: 'array' });
+  return getTypeMappings(config);
+}
+
 // Helper to parse a type annotation and transform it
 function parseAndTransformType(typeAnnotation: string, mappings = getDefaultMappings()): string {
   const project = new Project({ useInMemoryFileSystem: true });
@@ -65,39 +77,63 @@ describe('Basic Types', () => {
   });
 
   describe('Array types', () => {
-    it('should transpile string[] array type', () => {
-      const result = parseAndTransformType('string[]');
-      expect(result).toBe('string[]');
+    describe('with list transform (default)', () => {
+      it('should transpile string[] to List<string>', () => {
+        const result = parseAndTransformType('string[]');
+        expect(result).toBe('List<string>');
+      });
+
+      it('should transpile number[] to List<float> by default', () => {
+        const result = parseAndTransformType('number[]');
+        expect(result).toBe('List<float>');
+      });
+
+      it('should transpile Array<T> to List<T>', () => {
+        const result = parseAndTransformType('Array<string>');
+        expect(result).toBe('List<string>');
+      });
+
+      it('should transpile nested arrays to List<List<T>>', () => {
+        const result = parseAndTransformType('number[][]');
+        expect(result).toBe('List<List<float>>');
+      });
     });
 
-    it('should transpile number[] to float[] by default', () => {
-      const result = parseAndTransformType('number[]');
-      expect(result).toBe('float[]');
-    });
+    describe('with native array transform', () => {
+      it('should transpile string[] to string[]', () => {
+        const result = parseAndTransformType('string[]', getArrayMappings());
+        expect(result).toBe('string[]');
+      });
 
-    it('should transpile number[] to double[] when configured', () => {
-      const result = parseAndTransformType('number[]', getDoubleMappings());
-      expect(result).toBe('double[]');
-    });
+      it('should transpile number[] to float[]', () => {
+        const result = parseAndTransformType('number[]', getArrayMappings());
+        expect(result).toBe('float[]');
+      });
 
-    it('should transpile Array<T> generic syntax', () => {
-      const result = parseAndTransformType('Array<string>');
-      expect(result).toBe('string[]');
-    });
+      it('should transpile number[] to double[] when configured', () => {
+        const result = parseAndTransformType('number[]', getDoubleArrayMappings());
+        expect(result).toBe('double[]');
+      });
 
-    it('should transpile Array<number> to float[]', () => {
-      const result = parseAndTransformType('Array<number>');
-      expect(result).toBe('float[]');
-    });
+      it('should transpile Array<T> generic syntax to T[]', () => {
+        const result = parseAndTransformType('Array<string>', getArrayMappings());
+        expect(result).toBe('string[]');
+      });
 
-    it('should transpile nested arrays', () => {
-      const result = parseAndTransformType('number[][]');
-      expect(result).toBe('float[][]');
-    });
+      it('should transpile Array<number> to float[]', () => {
+        const result = parseAndTransformType('Array<number>', getArrayMappings());
+        expect(result).toBe('float[]');
+      });
 
-    it('should transpile boolean arrays', () => {
-      const result = parseAndTransformType('boolean[]');
-      expect(result).toBe('bool[]');
+      it('should transpile nested arrays to T[][]', () => {
+        const result = parseAndTransformType('number[][]', getArrayMappings());
+        expect(result).toBe('float[][]');
+      });
+
+      it('should transpile boolean arrays', () => {
+        const result = parseAndTransformType('boolean[]', getArrayMappings());
+        expect(result).toBe('bool[]');
+      });
     });
   });
 

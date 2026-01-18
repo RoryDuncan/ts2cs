@@ -86,18 +86,19 @@ describe('Import/Export Syntax', () => {
   });
 
   describe('Export statements', () => {
-    it.todo('should transpile named export on declaration', () => {
-      // export class Player extends Node2D {}
-      // ->
-      // public partial class Player : Node2D {}
-      // (public modifier makes it accessible)
-    });
+    it('should transpile exported class (public by default)', () => {
+      const input = `export class Player extends Node2D {
+}`;
 
-    it.todo('should transpile separate named export', () => {
-      // class Player extends Node2D {}
-      // export { Player };
-      // ->
-      // public partial class Player : Node2D {}
+      const expected = `${GENERATED_HEADER}
+
+using Godot;
+
+public partial class Player : Node2D
+{
+}`;
+
+      expectCSharp(input, expected);
     });
 
     it.todo('should transpile renamed export', () => {
@@ -107,7 +108,7 @@ describe('Import/Export Syntax', () => {
       // (needs decision - type alias? or just use original name?)
     });
 
-    it.todo('should transpile default export', () => {
+    it.todo('should transpile default export class', () => {
       // export default class Player extends Node2D {}
     });
 
@@ -116,23 +117,50 @@ describe('Import/Export Syntax', () => {
       // ->
       // (no direct equivalent - might generate wrapper or skip)
     });
-
-    it.todo('should transpile re-export all', () => {
-      // export * from './entities';
-    });
   });
 
   describe('Godot-specific imports', () => {
-    it.todo('should handle Godot namespace import', () => {
-      // import { Node2D, Sprite2D, Vector2 } from 'godot';
-      // ->
-      // using Godot;
-      // (all Godot types come from single namespace)
+    it('should detect Godot types in extends clause and add using statement', () => {
+      const input = `class Player extends Node2D {
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+using Godot;
+
+public partial class Player : Node2D
+{
+}`;
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should detect Godot types and add using statement', () => {
-      // If file uses any Godot type (even without explicit import)
-      // the transpiler should add `using Godot;`
+    it('should detect Sprite2D and add using Godot', () => {
+      const input = `class Enemy extends Sprite2D {
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+using Godot;
+
+public partial class Enemy : Sprite2D
+{
+}`;
+
+      expectCSharp(input, expected);
+    });
+
+    it('should not add using Godot for non-Godot classes', () => {
+      const input = `class Player extends BaseEntity {
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+public partial class Player : BaseEntity
+{
+}`;
+
+      expectCSharp(input, expected);
     });
   });
 

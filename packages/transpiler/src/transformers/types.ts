@@ -5,7 +5,7 @@
  */
 
 import { TypeNode, Type, SyntaxKind } from 'ts-morph';
-import { ResolvedTypeMappings } from '../config/schema.js';
+import { ResolvedTypeMappings, ArrayTransform, TypedArrayTransform } from '../config/schema.js';
 
 /**
  * Transform a TypeScript type to its C# equivalent
@@ -48,22 +48,94 @@ export function transformType(
   if (typeNode.isKind(SyntaxKind.ArrayType)) {
     const elementType = typeNode.getElementTypeNode();
     const elementCSharp = transformType(elementType, mappings);
-    return `${elementCSharp}[]`;
+    return formatArrayType(elementCSharp, mappings.arrayTransform);
   }
 
-  // Handle generic Array<T>
+  // Handle generic type references
   if (typeNode.isKind(SyntaxKind.TypeReference)) {
     const typeName = typeNode.getTypeName().getText();
+    const typeArgs = typeNode.getTypeArguments();
     
-    if (typeName === 'Array') {
-      const typeArgs = typeNode.getTypeArguments();
-      if (typeArgs.length === 1) {
-        const elementCSharp = transformType(typeArgs[0], mappings);
-        return `${elementCSharp}[]`;
-      }
+    // Array<T> -> configurable output
+    if (typeName === 'Array' && typeArgs.length === 1) {
+      const elementCSharp = transformType(typeArgs[0], mappings);
+      return formatArrayType(elementCSharp, mappings.arrayTransform);
     }
     
-    // Other type references - return as-is for now
+    // ReadonlyArray<T> -> IReadOnlyList<T> (always IReadOnlyList regardless of config)
+    if (typeName === 'ReadonlyArray' && typeArgs.length === 1) {
+      const elementType = transformType(typeArgs[0], mappings);
+      return `IReadOnlyList<${elementType}>`;
+    }
+    
+    // TypedArray mappings
+    const typedArrayMapping = getTypedArrayMapping(typeName, mappings.typedArrayTransform);
+    if (typedArrayMapping) {
+      return typedArrayMapping;
+    }
+    
+    // Promise<T> -> Task<T>, Promise<void> -> Task
+    if (typeName === 'Promise') {
+      if (typeArgs.length === 1) {
+        const innerType = transformType(typeArgs[0], mappings);
+        if (innerType === 'void') {
+          return 'Task';
+        }
+        return `Task<${innerType}>`;
+      }
+      return 'Task';
+    }
+    
+    // Map<K, V> -> Dictionary<K, V>
+    if (typeName === 'Map' && typeArgs.length === 2) {
+      const keyType = transformType(typeArgs[0], mappings);
+      const valueType = transformType(typeArgs[1], mappings);
+      return `Dictionary<${keyType}, ${valueType}>`;
+    }
+    
+    // Set<T> -> HashSet<T>
+    if (typeName === 'Set' && typeArgs.length === 1) {
+      const elementType = transformType(typeArgs[0], mappings);
+      return `HashSet<${elementType}>`;
+    }
+    
+    // Record<K, V> -> Dictionary<K, V>
+    if (typeName === 'Record' && typeArgs.length === 2) {
+      const keyType = transformType(typeArgs[0], mappings);
+      const valueType = transformType(typeArgs[1], mappings);
+      return `Dictionary<${keyType}, ${valueType}>`;
+    }
+    
+    // WeakMap<K, V> -> Dictionary<K, V> (approximate)
+    if (typeName === 'WeakMap' && typeArgs.length === 2) {
+      const keyType = transformType(typeArgs[0], mappings);
+      const valueType = transformType(typeArgs[1], mappings);
+      return `Dictionary<${keyType}, ${valueType}>`;
+    }
+    
+    // WeakSet<T> -> HashSet<T> (approximate)
+    if (typeName === 'WeakSet' && typeArgs.length === 1) {
+      const elementType = transformType(typeArgs[0], mappings);
+      return `HashSet<${elementType}>`;
+    }
+    
+    // Partial<T> -> T (C# doesn't have exact equivalent, but all props are optional)
+    if (typeName === 'Partial' && typeArgs.length === 1) {
+      return transformType(typeArgs[0], mappings);
+    }
+    
+    // Required<T> -> T
+    if (typeName === 'Required' && typeArgs.length === 1) {
+      return transformType(typeArgs[0], mappings);
+    }
+    
+    // Other generics - preserve the structure
+    if (typeArgs.length > 0) {
+      const transformedArgs = typeArgs.map(a => transformType(a, mappings));
+      return `${typeName}<${transformedArgs.join(', ')}>`;
+    }
+    
+    // Non-generic type references - return as-is
     return typeName;
   }
 
@@ -210,9 +282,9 @@ export function transformResolvedType(
     const elementType = type.getArrayElementType();
     if (elementType) {
       const elementCSharp = transformResolvedType(elementType, mappings);
-      return `${elementCSharp}[]`;
+      return formatArrayType(elementCSharp, mappings.arrayTransform);
     }
-    return 'object[]';
+    return formatArrayType('object', mappings.arrayTransform);
   }
   
   // Check for union with null/undefined (nullable)
@@ -229,5 +301,56 @@ export function transformResolvedType(
   
   // Fallback
   return text;
+}
+
+/**
+ * Format an array type based on the configured array transform
+ */
+export function formatArrayType(elementType: string, transform: ArrayTransform): string {
+  switch (transform) {
+    case 'array':
+      return `${elementType}[]`;
+    case 'list':
+      return `List<${elementType}>`;
+    case 'godot-array':
+      return `Godot.Collections.Array<${elementType}>`;
+  }
+}
+
+/**
+ * TypedArray element type mappings
+ */
+const TYPED_ARRAY_ELEMENT_TYPES: Record<string, string> = {
+  Int8Array: 'sbyte',
+  Uint8Array: 'byte',
+  Uint8ClampedArray: 'byte',
+  Int16Array: 'short',
+  Uint16Array: 'ushort',
+  Int32Array: 'int',
+  Uint32Array: 'uint',
+  Float32Array: 'float',
+  Float64Array: 'double',
+  BigInt64Array: 'long',
+  BigUint64Array: 'ulong',
+};
+
+/**
+ * Get the C# type for a TypeScript TypedArray
+ */
+export function getTypedArrayMapping(
+  typeName: string,
+  transform: TypedArrayTransform
+): string | null {
+  const elementType = TYPED_ARRAY_ELEMENT_TYPES[typeName];
+  if (!elementType) {
+    return null;
+  }
+  
+  switch (transform) {
+    case 'array':
+      return `${elementType}[]`;
+    case 'span':
+      return `Span<${elementType}>`;
+  }
 }
 

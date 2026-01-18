@@ -149,9 +149,11 @@ public partial class GameManager : Node
 
       const expected = `${GENERATED_HEADER}
 
+using System.Collections.Generic;
+
 public partial class Inventory
 {
-    public string[] items = new[] { };
+    public List<string> items = new List<string>();
 }`;
 
       expectCSharp(input, expected);
@@ -300,36 +302,72 @@ public partial class Player : Node2D
   });
 
   describe('Constructors', () => {
-    it.todo('should transpile constructor with no parameters', () => {
-      // class Player extends Node2D {
-      //   constructor() {
-      //   }
-      // }
+    it('should transpile constructor with no parameters', () => {
+      const input = `class Player extends Node2D {
+  constructor() {
+  }
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+using Godot;
+
+public partial class Player : Node2D
+{
+    public Player()
+    {
+    }
+}`;
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should transpile constructor with parameters', () => {
-      // class Player extends Node2D {
-      //   name: string;
-      //   constructor(name: string) {
-      //     this.name = name;
-      //   }
-      // }
+    it('should transpile constructor with parameters', () => {
+      const input = `class Player extends Node2D {
+  name: string;
+  constructor(name: string) {
+    this.name = name;
+  }
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+using Godot;
+
+public partial class Player : Node2D
+{
+    public string name;
+    public Player(string name)
+    {
+        this.name = name;
+    }
+}`;
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should transpile constructor with parameter properties', () => {
-      // class Player extends Node2D {
-      //   constructor(public name: string, private health: number) {
-      //   }
-      // }
-      // ->
-      // public partial class Player : Node2D
-      // {
-      //     public string name;
-      //     private float health;
-      //     public Player(string name, float health) {
-      //         this.name = name;
-      //         this.health = health;
-      //     }
+    it('should transpile constructor with parameter properties', () => {
+      const input = `class Player extends Node2D {
+  constructor(public name: string, private health: number) {
+  }
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+using Godot;
+
+public partial class Player : Node2D
+{
+    public string name;
+    private float health;
+    public Player(string name, float health)
+    {
+        this.name = name;
+        this.health = health;
+    }
+}`;
+
+      expectCSharp(input, expected);
       // }
     });
   });
@@ -405,50 +443,86 @@ public partial class GameManager : Node
       expectCSharp(input, expected);
     });
 
-    it.todo('should transpile static method', () => {
-      // class MathUtils {
-      //   static clamp(value: number, min: number, max: number): number {
-      //     return Math.max(min, Math.min(max, value));
-      //   }
-      // }
+    it('should transpile static method', () => {
+      const input = `class MathUtils {
+  static add(a: number, b: number): number {
+    return a + b;
+  }
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+public partial class MathUtils
+{
+    public static float Add(float a, float b)
+    {
+        return a + b;
+    }
+}`;
+
+      expectCSharp(input, expected);
     });
   });
 
   describe('Getters and Setters', () => {
-    it.todo('should transpile getter', () => {
-      // class Player {
-      //   private _health: number = 100;
-      //   get health(): number {
-      //     return this._health;
-      //   }
-      // }
-      // ->
-      // private float _health = 100;
-      // public float health { get => _health; }
+    it('should transpile getter', () => {
+      const input = `class Player {
+  private _health: number = 100;
+  get health(): number {
+    return this._health;
+  }
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+public partial class Player
+{
+    private float _health = 100;
+    public float health { get => _health; }
+}`;
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should transpile setter', () => {
-      // class Player {
-      //   private _health: number = 100;
-      //   set health(value: number) {
-      //     this._health = value;
-      //   }
-      // }
-      // ->
-      // public float health { set => _health = value; }
+    it('should transpile setter', () => {
+      const input = `class Player {
+  private _health: number = 100;
+  set health(value: number) {
+    this._health = value;
+  }
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+public partial class Player
+{
+    private float _health = 100;
+    public float health { set => _health = value; }
+}`;
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should transpile getter and setter pair', () => {
-      // class Player {
-      //   private _health: number = 100;
-      //   get health(): number { return this._health; }
-      //   set health(value: number) { this._health = value; }
-      // }
-      // ->
-      // public float health {
-      //     get => _health;
-      //     set => _health = value;
-      // }
+    it('should transpile getter and setter pair', () => {
+      const input = `class Player {
+  private _health: number = 100;
+  get health(): number { return this._health; }
+  set health(value: number) { this._health = value; }
+}`;
+
+      const expected = `${GENERATED_HEADER}
+
+public partial class Player
+{
+    private float _health = 100;
+    public float health
+    {
+        get => _health;
+        set => _health = value;
+    }
+}`;
+
+      expectCSharp(input, expected);
     });
   });
 

@@ -6,6 +6,7 @@ import { PropertyDeclaration, ClassDeclaration } from 'ts-morph';
 import { ResolvedTypeMappings } from '../config/schema.js';
 import { transformType } from './types.js';
 import { getModifiers, formatModifiers } from './modifiers.js';
+import { escapeCSharpKeyword } from '../utils/naming.js';
 
 /**
  * Transpile a class property to C#
@@ -13,9 +14,10 @@ import { getModifiers, formatModifiers } from './modifiers.js';
 export function transpileProperty(
   property: PropertyDeclaration,
   mappings: ResolvedTypeMappings,
-  indent: string = '    '
+  indent = '    '
 ): string {
   const name = property.getName();
+  const escapedName = escapeCSharpKeyword(name);
   const typeNode = property.getTypeNode();
   const initializer = property.getInitializer();
   const modifiers = getModifiers(property);
@@ -32,7 +34,7 @@ export function transpileProperty(
   // Build the field declaration
   const modifierStr = formatModifiers(modifiers);
   
-  let declaration = `${indent}${modifierStr} ${csharpType} ${name}`;
+  let declaration = `${indent}${modifierStr} ${csharpType} ${escapedName}`;
   
   // Add initializer if present
   if (initializer) {
@@ -51,7 +53,7 @@ export function transpileProperty(
 export function transpileClassProperties(
   classDecl: ClassDeclaration,
   mappings: ResolvedTypeMappings,
-  indent: string = '    '
+  indent = '    '
 ): string[] {
   const properties = classDecl.getProperties();
   return properties.map(prop => transpileProperty(prop, mappings, indent));
@@ -63,8 +65,8 @@ export function transpileClassProperties(
  */
 function transpileInitializer(
   tsInitializer: string,
-  _targetType: string,
-  _mappings: ResolvedTypeMappings
+  targetType: string,
+  mappings: ResolvedTypeMappings
 ): string {
   // Simple literal transformations
   
@@ -95,7 +97,7 @@ function transpileInitializer(
   
   // Array literals
   if (tsInitializer.startsWith('[')) {
-    return convertArrayLiteral(tsInitializer);
+    return convertArrayLiteral(tsInitializer, targetType, mappings);
   }
   
   // Number literals - keep as-is
@@ -121,21 +123,60 @@ function convertTemplateString(template: string): string {
 }
 
 /**
- * Convert TypeScript array literal to C# array initializer
+ * Convert TypeScript array literal to C# array/list initializer
  */
-function convertArrayLiteral(arrayLiteral: string): string {
-  // [1, 2, 3] -> new[] { 1, 2, 3 }
-  // [] -> Array.Empty<T>() or new T[] {}
-  
+function convertArrayLiteral(
+  arrayLiteral: string,
+  targetType: string,
+  mappings: ResolvedTypeMappings
+): string {
   const content = arrayLiteral.slice(1, -1).trim();
+  const transform = mappings.arrayTransform;
   
-  if (content === '') {
-    // Empty array - use Array.Empty or explicit array
-    // For now, return a simple empty array
-    return 'new[] { }';
+  // Extract element type from targetType
+  // List<T> -> T, T[] -> T, Godot.Collections.Array<T> -> T
+  const elementType = extractElementType(targetType);
+  
+  switch (transform) {
+    case 'array':
+      if (content === '') {
+        // Empty array - C# cannot infer type, must use explicit type
+        return `new ${elementType}[] { }`;
+      }
+      return `new[] { ${content} }`;
+      
+    case 'list':
+      if (content === '') {
+        return `new List<${elementType}>()`;
+      }
+      return `new List<${elementType}> { ${content} }`;
+      
+    case 'godot-array':
+      if (content === '') {
+        return `new Godot.Collections.Array<${elementType}>()`;
+      }
+      return `new Godot.Collections.Array<${elementType}> { ${content} }`;
+  }
+}
+
+/**
+ * Extract element type from a collection type string
+ * List<T> -> T, T[] -> T, Godot.Collections.Array<T> -> T
+ */
+function extractElementType(collectionType: string): string {
+  // Handle T[] format
+  if (collectionType.endsWith('[]')) {
+    return collectionType.slice(0, -2);
   }
   
-  // Convert array literal to C# syntax
-  return `new[] { ${content} }`;
+  // Handle Generic<T> format (List<T>, Godot.Collections.Array<T>, etc.)
+  const genericRegex = /<(.+)>$/;
+  const genericMatch = genericRegex.exec(collectionType);
+  if (genericMatch?.[1]) {
+    return genericMatch[1];
+  }
+  
+  // Fallback - can't determine element type, use object
+  return 'object';
 }
 

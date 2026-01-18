@@ -19,8 +19,8 @@ export function normalize(code: string): string {
 /**
  * Transpile TypeScript source to C#
  */
-export function transpile(tsSource: string): string {
-  return transpileSource(tsSource);
+export function transpile(tsSource: string, config?: Record<string, unknown>): string {
+  return transpileSource(tsSource, 'test.ts', config);
 }
 
 /**
@@ -28,6 +28,18 @@ export function transpile(tsSource: string): string {
  */
 export function expectCSharp(tsInput: string, expectedCs: string): void {
   const result = transpile(tsInput);
+  expect(normalize(result)).toBe(normalize(expectedCs));
+}
+
+/**
+ * Assert that TypeScript input transpiles to expected C# output with custom config
+ */
+export function expectCSharpWithConfig(
+  tsInput: string, 
+  expectedCs: string, 
+  config: Record<string, unknown>
+): void {
+  const result = transpile(tsInput, config);
   expect(normalize(result)).toBe(normalize(expectedCs));
 }
 
