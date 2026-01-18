@@ -12,8 +12,14 @@ import {
   type TranspilerConfig,
 } from './config/schema.js';
 
-export { TranspilerConfigSchema, parseConfig, safeParseConfig } from './config/schema.js';
-export type { TranspilerConfig, TypeMappings } from './config/schema.js';
+export { 
+  TranspilerConfigSchema, 
+  parseConfig, 
+  safeParseConfig,
+  getTypeMappings,
+  getNamespace,
+} from './config/schema.js';
+export type { TranspilerConfig, TypeMappings, NumberType } from './config/schema.js';
 
 export interface TranspileResult {
   /** Whether the transpilation was successful */

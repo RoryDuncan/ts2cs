@@ -1,13 +1,20 @@
 import * as v from 'valibot';
 
 /**
+ * Number type option - controls how TypeScript 'number' maps to C#
+ */
+export const NumberTypeSchema = v.picklist(['float', 'double']);
+export type NumberType = v.InferOutput<typeof NumberTypeSchema>;
+
+/**
  * Type mappings from TypeScript types to C# types
  */
 export const TypeMappingsSchema = v.object({
   string: v.optional(v.string(), 'string'),
-  number: v.optional(v.string(), 'double'),
+  number: v.optional(v.string()), // Controlled by numberType config
   boolean: v.optional(v.string(), 'bool'),
   any: v.optional(v.string(), 'object'),
+  unknown: v.optional(v.string(), 'object'),
   void: v.optional(v.string(), 'void'),
   null: v.optional(v.string(), 'null'),
   undefined: v.optional(v.string(), 'null'),
@@ -23,10 +30,21 @@ export const TranspilerConfigSchema = v.object({
   /** Output directory for generated C# files */
   outputDir: v.pipe(v.string(), v.minLength(1)),
   
-  /** Base C# namespace for generated code */
-  namespace: v.optional(v.string(), 'GameScripts'),
+  /** 
+   * Base C# namespace for generated code.
+   * Sub-namespaces are derived from file paths.
+   * Defaults to the input directory name in PascalCase.
+   */
+  namespace: v.optional(v.string()),
   
-  /** Custom type mappings from TS to C# */
+  /** 
+   * C# type to use for TypeScript 'number'.
+   * - 'float': 32-bit, commonly used in Godot (default)
+   * - 'double': 64-bit, matches JavaScript precision
+   */
+  numberType: v.optional(NumberTypeSchema, 'float'),
+  
+  /** Custom type mappings from TS to C# (overrides defaults) */
   typeMappings: v.optional(TypeMappingsSchema),
   
   /** Whether to emit one C# file per TypeScript module */
@@ -66,3 +84,57 @@ export function safeParseConfig(config: unknown): v.SafeParseResult<typeof Trans
   return v.safeParse(TranspilerConfigSchema, config);
 }
 
+/**
+ * Resolved type mappings with all defaults applied
+ */
+export interface ResolvedTypeMappings {
+  string: string;
+  number: string;
+  boolean: string;
+  any: string;
+  unknown: string;
+  void: string;
+  null: string;
+  undefined: string;
+}
+
+/**
+ * Get the resolved type mappings with defaults applied
+ */
+export function getTypeMappings(config: TranspilerConfig): ResolvedTypeMappings {
+  const numberType = config.numberType ?? 'float';
+  const customMappings = config.typeMappings;
+  
+  return {
+    string: customMappings?.string ?? 'string',
+    number: customMappings?.number ?? numberType,
+    boolean: customMappings?.boolean ?? 'bool',
+    any: customMappings?.any ?? 'object',
+    unknown: customMappings?.unknown ?? 'object',
+    void: customMappings?.void ?? 'void',
+    null: customMappings?.null ?? 'null',
+    undefined: customMappings?.undefined ?? 'null',
+  };
+}
+
+/**
+ * Get the resolved namespace, defaulting to directory name if not provided
+ */
+export function getNamespace(config: TranspilerConfig): string {
+  if (config.namespace) {
+    return config.namespace;
+  }
+  // Default to PascalCase of last directory segment
+  const parts = config.inputDir.replace(/\\/g, '/').split('/').filter(Boolean);
+  const lastPart = parts[parts.length - 1] ?? 'GameScripts';
+  return toPascalCase(lastPart);
+}
+
+/**
+ * Convert a string to PascalCase
+ */
+function toPascalCase(str: string): string {
+  return str
+    .replace(/[-_\s]+(.)?/g, (_, c: string | undefined) => c?.toUpperCase() ?? '')
+    .replace(/^(.)/, (_, c: string) => c.toUpperCase());
+}
