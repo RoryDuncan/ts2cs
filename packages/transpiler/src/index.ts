@@ -11,6 +11,13 @@ import {
   parseConfig as parseConfigFn,
   type TranspilerConfig,
 } from './config/schema.js';
+import { 
+  createContext,
+  transpileSourceFileWithWarnings,
+} from './transpiler.js';
+import { Project } from 'ts-morph';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 export { 
   TranspilerConfigSchema, 
@@ -20,6 +27,9 @@ export {
   getNamespace,
 } from './config/schema.js';
 export type { TranspilerConfig, TypeMappings, NumberType } from './config/schema.js';
+
+// Re-export the simpler transpileSource function for quick usage
+export { transpileSource, GENERATED_HEADER } from './transpiler.js';
 
 export interface TranspileResult {
   /** Whether the transpilation was successful */
@@ -85,25 +95,118 @@ export class Transpiler {
    * Transpile all TypeScript files in the input directory
    */
   async transpile(): Promise<TranspileResult> {
-    // TODO: Implement transpilation logic using ts-morph
+    const files = new Map<string, string>();
+    const errors: TranspileError[] = [];
+    const warnings: TranspileWarning[] = [];
+
+    // Find all TypeScript files in the input directory
+    const tsFiles = await findTypeScriptFiles(this.config.inputDir);
+
+    if (tsFiles.length === 0) {
+      return { success: true, files, errors, warnings };
+    }
+
+    // Create a ts-morph project with all files
+    const project = new Project({
+      compilerOptions: {
+        target: 99, // ESNext
+        module: 99, // ESNext
+        strict: true,
+      },
+    });
+
+    // Add all source files to the project
+    for (const tsFile of tsFiles) {
+      project.addSourceFileAtPath(tsFile);
+    }
+
+    // Transpile each file
+    for (const tsFile of tsFiles) {
+      const sourceFile = project.getSourceFile(tsFile);
+      if (!sourceFile) continue;
+
+      // Calculate relative path from input dir
+      const relativePath = path.relative(this.config.inputDir, tsFile);
+      
+      try {
+        const context = createContext(this.config, relativePath);
+        const result = transpileSourceFileWithWarnings(sourceFile, context);
+
+        // Calculate output path
+        const outputRelativePath = relativePath.replace(/\.tsx?$/, '.cs');
+        const outputPath = path.join(this.config.outputDir, outputRelativePath);
+
+        // Store the transpiled content
+        files.set(outputPath, result.code);
+
+        // Convert internal warnings to public format
+        for (const w of result.warnings) {
+          warnings.push({
+            file: tsFile,
+            line: w.line ?? 1,
+            column: w.column ?? 1,
+            message: w.message,
+            code: 'TS2CS_WARNING',
+          });
+        }
+      } catch (err) {
+        errors.push({
+          file: tsFile,
+          line: 1,
+          column: 1,
+          message: err instanceof Error ? err.message : String(err),
+          code: 'TS2CS_ERROR',
+        });
+      }
+    }
+
+    // Write output files if there are no errors
+    if (errors.length === 0) {
+      await writeOutputFiles(files, this.config.outputDir);
+    }
+
     return {
-      success: true,
-      files: new Map(),
-      errors: [],
-      warnings: [],
+      success: errors.length === 0,
+      files,
+      errors,
+      warnings,
     };
   }
 
   /**
    * Transpile a single TypeScript source string
    */
-  transpileSource(_source: string, _fileName = 'source.ts'): TranspileResult {
-    // TODO: Implement single-file transpilation
+  transpileSource(source: string, fileName = 'source.ts'): TranspileResult {
+    const project = new Project({
+      useInMemoryFileSystem: true,
+      compilerOptions: {
+        target: 99, // ESNext
+        module: 99, // ESNext
+        strict: true,
+      },
+    });
+
+    const sourceFile = project.createSourceFile(fileName, source);
+    const context = createContext(this.config, fileName);
+    const result = transpileSourceFileWithWarnings(sourceFile, context);
+    
+    // Convert output filename from .ts to .cs
+    const outputFileName = fileName.replace(/\.ts?$/, '.cs');
+    
+    // Convert internal warnings to public warning format
+    const warnings: TranspileWarning[] = result.warnings.map(w => ({
+      file: fileName,
+      line: w.line ?? 1,
+      column: w.column ?? 1,
+      message: w.message,
+      code: 'TS2CS_WARNING',
+    }));
+
     return {
       success: true,
-      files: new Map(),
+      files: new Map([[outputFileName, result.code]]),
       errors: [],
-      warnings: [],
+      warnings,
     };
   }
 }
@@ -114,4 +217,48 @@ export class Transpiler {
 export function createTranspiler(config: unknown): Transpiler {
   const validatedConfig = parseConfigFn(config);
   return new Transpiler(validatedConfig);
+}
+
+/**
+ * Recursively find all TypeScript files in a directory
+ */
+async function findTypeScriptFiles(dir: string): Promise<string[]> {
+  const files: string[] = [];
+  
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        // Skip node_modules and hidden directories
+        if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
+          continue;
+        }
+        const subFiles = await findTypeScriptFiles(fullPath);
+        files.push(...subFiles);
+      } else if (entry.isFile() && /\.tsx?$/.test(entry.name) && !entry.name.endsWith('.d.ts')) {
+        files.push(fullPath);
+      }
+    }
+  } catch {
+    // Directory doesn't exist or is not readable
+  }
+  
+  return files;
+}
+
+/**
+ * Write all output files to the output directory
+ */
+async function writeOutputFiles(files: Map<string, string>, _outputDir: string): Promise<void> {
+  for (const [filePath, content] of files) {
+    // Ensure the directory exists
+    const dir = path.dirname(filePath);
+    await fs.mkdir(dir, { recursive: true });
+    
+    // Write the file
+    await fs.writeFile(filePath, content, 'utf-8');
+  }
 }
