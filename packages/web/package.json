@@ -4,6 +4,8 @@
   "version": "0.0.1",
   "type": "module",
   "dependencies": {
+    "bits-ui": "^2.15.4",
+    "open-props": "^1.7.17",
     "ts2cs-transpiler": "file:../transpiler"
   },
   "scripts": {
