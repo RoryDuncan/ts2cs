@@ -22,8 +22,19 @@ export {
 } from "./config/schema.js";
 export type { TranspilerConfig, TypeMappings, NumberType } from "./config/schema.js";
 
-// Re-export the simpler transpileSource function for quick usage
-export { transpileSource, GENERATED_HEADER, PROJECT_NAME } from "./transpiler.js";
+// Re-export transpile functions for quick usage
+export {
+  transpileSource,
+  transpileSourceWithWarnings,
+  GENERATED_HEADER,
+  PROJECT_NAME
+} from "./transpiler.js";
+
+export type {
+  TranspileContext,
+  TranspileResult as TranspileSourceResult,
+  TranspileWarning as TranspileSourceWarning
+} from "./transpiler.js";
 
 export interface TranspileResult {
   /** Whether the transpilation was successful */

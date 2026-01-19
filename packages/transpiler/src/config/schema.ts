@@ -86,7 +86,14 @@ export const TranspilerConfigSchema = v.object({
   watch: v.optional(v.boolean(), false),
 
   /** Strategy for handling discriminated unions */
-  discriminatedUnionStrategy: v.optional(v.picklist(["abstract-subclass", "tagged-struct"]), "abstract-subclass")
+  discriminatedUnionStrategy: v.optional(v.picklist(["abstract-subclass", "tagged-struct"]), "abstract-subclass"),
+
+  /**
+   * Whether to include the auto-generated header comment in output.
+   * - true: Include the default auto-generated header
+   * - false: No header in output (default)
+   */
+  includeHeader: v.optional(v.boolean(), false)
 });
 
 /**

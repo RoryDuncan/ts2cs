@@ -23,9 +23,10 @@ export function normalize(code: string): string {
 
 /**
  * Transpile TypeScript source to C#
+ * Note: Tests default to includeHeader: true to match expected output with headers
  */
 export function transpile(tsSource: string, config?: Record<string, unknown>): string {
-  return transpileSource(tsSource, "test.ts", config);
+  return transpileSource(tsSource, "test.ts", { includeHeader: true, ...config });
 }
 
 /**

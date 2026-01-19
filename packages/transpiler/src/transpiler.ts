@@ -135,11 +135,11 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
   const discriminatedUnions = typeAliases.filter((ta) => isDiscriminatedUnion(ta));
 
   if (classes.length === 0 && enums.length === 0 && interfaces.length === 0 && discriminatedUnions.length === 0) {
-    // Empty file or no declarations - just return header
-    return { code: GENERATED_HEADER, warnings };
+    // Empty file or no declarations - return header if enabled, otherwise empty
+    return { code: context.config.includeHeader ? GENERATED_HEADER : "", warnings };
   }
 
-  const parts: string[] = [GENERATED_HEADER, ""];
+  const parts: string[] = context.config.includeHeader ? [GENERATED_HEADER, ""] : [];
   const usings: string[] = [];
 
   // Check if any class extends a Godot type

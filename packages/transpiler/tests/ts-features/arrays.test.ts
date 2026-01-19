@@ -6,7 +6,7 @@ import { wrapExpected, TEST_NAMESPACE } from "../helpers.js";
  * Helper to compare transpiled output
  */
 function expectCSharp(input: string, expected: string, config?: Record<string, unknown>) {
-  const result = transpileSource(input, "test.ts", config);
+  const result = transpileSource(input, "test.ts", { includeHeader: true, ...config });
   expect(result.trim()).toBe(expected.trim());
 }
 
