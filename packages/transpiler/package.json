@@ -2,21 +2,21 @@
   "name": "ts2cs-transpiler",
   "version": "0.1.0",
   "description": "TypeScript to C# transpiler for Godot 4.x",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/index.cjs",
+  "types": "dist/index.d.cts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/index.d.cts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.cjs"
     }
   },
   "bin": {
-    "ts2cs": "dist/cli.js"
+    "ts2cs": "dist/cli.cjs"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest",
@@ -32,19 +32,18 @@
   ],
   "author": "",
   "license": "MIT",
-  "dependencies": {
-    "cac": "^6.7.14",
-    "ts-morph": "^24.0.0",
-    "valibot": "^0.42.1"
-  },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/node": "^25.0.9",
+    "cac": "^6.7.14",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.7.4",
+    "ts-morph": "^24.0.0",
+    "tsdown": "^0.20.0-beta.3",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.19.1",
+    "valibot": "^0.42.1",
     "vitest": "^2.1.8"
   },
   "engines": {

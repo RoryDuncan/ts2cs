@@ -2,7 +2,6 @@
   import "$lib/css/panes.css";
   import { PaneGroup, Pane, PaneResizer } from "paneforge";
   import { enhance } from "$app/forms";
-  import { page } from "$app/stores";
   import CodeEditor from "$lib/components/CodeEditor.svelte";
   import CodeBlock from "$lib/components/CodeBlock.svelte";
   import { buildShareUrl } from "$lib/share";
@@ -289,15 +288,6 @@
   .transpile-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-  }
-
-  .share-btn:hover {
-    background: var(--surface-3);
-    color: var(--text-1);
-  }
-
-  .share-btn .material-symbols-outlined {
-    font-size: 18px;
   }
 
   .error-indicator {
