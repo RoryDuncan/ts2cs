@@ -20,12 +20,6 @@ A TypeScript to C# transpiler designed for **Godot 4.x** game development. Write
 npm install ts2cs-transpiler
 ```
 
-Or with pnpm:
-
-```bash
-pnpm add ts2cs-transpiler
-```
-
 ### Requirements
 
 - Node.js >= 18.0.0
