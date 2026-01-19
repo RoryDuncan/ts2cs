@@ -1,5 +1,4 @@
 import { Project, SourceFile, ClassDeclaration, SyntaxKind } from "ts-morph";
-import { isGodotClass } from "./godot/index.js";
 import { TranspilerConfig, getTypeMappings, ResolvedTypeMappings, parseConfig, getNamespace } from "./config/schema.js";
 import { transpileClassProperties } from "./transformers/properties.js";
 import { transpileClassMethods, transpileClassConstructors } from "./transformers/methods.js";
@@ -9,6 +8,7 @@ import { transpileInterfaces } from "./transformers/interfaces.js";
 import { transpileDiscriminatedUnion } from "./transformers/discriminated-unions.js";
 import { isDiscriminatedUnion } from "./transformers/unions.js";
 import { getNamespaceFromPath, wrapInNamespace } from "./transformers/namespaces.js";
+import { analyzeImports } from "./transformers/imports.js";
 
 /**
  * The project name used in generated output
@@ -127,6 +127,15 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
   const interfaces = sourceFile.getInterfaces();
   const typeAliases = sourceFile.getTypeAliases();
 
+  // Analyze imports and populate mappings with imported types for type qualification
+  const importAnalysis = analyzeImports(sourceFile, context.config);
+  // Copy imported types to mappings for type transformers
+  context.mappings.importedTypes = importAnalysis.importedTypes;
+  // Add import warnings
+  for (const warning of importAnalysis.warnings) {
+    warnings.push({ message: warning });
+  }
+
   // Check for top-level statements
   const topLevelWarnings = checkTopLevelStatements(sourceFile);
   warnings.push(...topLevelWarnings);
@@ -142,15 +151,8 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
   const parts: string[] = context.config.includeHeader ? [GENERATED_HEADER, ""] : [];
   const usings: string[] = [];
 
-  // Check if any class extends a Godot type
-  const needsGodotUsing = classes.some((cls) => {
-    const baseClass = cls.getExtends();
-    if (!baseClass) return false;
-    const baseName = baseClass.getExpression().getText();
-    return isGodotClass(baseName);
-  });
-
-  if (needsGodotUsing) {
+  // Check if Godot namespace is needed (from imports or extends clauses)
+  if (importAnalysis.needsGodot) {
     usings.push("using Godot;");
   }
 

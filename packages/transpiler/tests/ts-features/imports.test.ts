@@ -360,4 +360,128 @@ class Game {}`;
       expect(result.usings.size).toBe(0);
     });
   });
+
+  describe("Subdirectory namespace qualification", () => {
+    it("should qualify type from subdirectory import", () => {
+      const input = `import { Color } from "./config/colors.ts";
+class Player {
+  color: Color;
+}`;
+
+      const expected = wrapExpected(`public partial class Player
+{
+    public Config.Color color;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should NOT qualify type from root-level import", () => {
+      const input = `import { Enemy } from "./enemy.ts";
+class Player {
+  target: Enemy;
+}`;
+
+      const expected = wrapExpected(`public partial class Player
+{
+    public Enemy target;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should qualify type from nested subdirectory import", () => {
+      const input = `import { Button } from "./ui/components/button.ts";
+class Menu {
+  btn: Button;
+}`;
+
+      const expected = wrapExpected(`public partial class Menu
+{
+    public Ui.Components.Button btn;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should qualify type-only imports from subdirectories", () => {
+      const input = `import type { Color } from "./config/colors.ts";
+class Player {
+  color: Color;
+}`;
+
+      const expected = wrapExpected(`public partial class Player
+{
+    public Config.Color color;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should convert kebab-case directory names to PascalCase namespace", () => {
+      const input = `import { Color } from "./my-data/colors.ts";
+class Player {
+  color: Color;
+}`;
+
+      const expected = wrapExpected(`public partial class Player
+{
+    public MyData.Color color;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should convert snake_case directory names to PascalCase namespace", () => {
+      const input = `import { Color } from "./my_data/colors.ts";
+class Player {
+  color: Color;
+}`;
+
+      const expected = wrapExpected(`public partial class Player
+{
+    public MyData.Color color;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should track importedTypes correctly in analyzeImports", () => {
+      const project = new Project({ useInMemoryFileSystem: true });
+      const sourceFile = project.createSourceFile(
+        "test.ts",
+        `
+        import { Color } from './config/colors';
+        import { Enemy } from './enemy';
+        class Player { 
+          color: Color;
+          target: Enemy;
+        }
+      `
+      );
+
+      const result = analyzeImports(sourceFile, defaultConfig);
+
+      // Color from subdirectory should be tracked
+      expect(result.importedTypes.has("Color")).toBe(true);
+      expect(result.importedTypes.get("Color")).toBe("Config");
+
+      // Enemy from root level should NOT be tracked
+      expect(result.importedTypes.has("Enemy")).toBe(false);
+    });
+
+    it("should handle aliased imports from subdirectories", () => {
+      const input = `import { Color as MyColor } from "./config/colors.ts";
+class Player {
+  color: MyColor;
+}`;
+
+      const expected = wrapExpected(`public partial class Player
+{
+    public Config.MyColor color;
+}`);
+
+      expectCSharp(input, expected);
+    });
+  });
 });

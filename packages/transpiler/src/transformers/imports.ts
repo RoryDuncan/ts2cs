@@ -19,6 +19,8 @@ export interface UsingStatements {
   needsGodot: boolean;
   /** Warnings for unsupported import patterns */
   warnings: string[];
+  /** Map of imported type names to their derived namespace (only for subdirectory imports) */
+  importedTypes: Map<string, string>;
 }
 
 /**
@@ -29,7 +31,8 @@ export function analyzeImports(sourceFile: SourceFile, config: TranspilerConfig)
     usings: new Set(),
     typeAliases: new Map(),
     needsGodot: false,
-    warnings: []
+    warnings: [],
+    importedTypes: new Map()
   };
 
   const imports = sourceFile.getImportDeclarations();
@@ -54,6 +57,31 @@ export function analyzeImports(sourceFile: SourceFile, config: TranspilerConfig)
 }
 
 /**
+ * Check if an import path has subdirectories (e.g., ./config/colors.ts vs ./player.ts)
+ */
+function hasSubdirectory(importPath: string): boolean {
+  // Remove leading ./ or ../
+  const cleanPath = importPath.replace(/^\.\.?\//, "");
+  // Check if there's at least one directory separator before the filename
+  return cleanPath.includes("/");
+}
+
+/**
+ * Clean an import path for namespace derivation
+ * - Removes leading ./ or ../
+ * - Removes file extension
+ * - Returns only the directory parts
+ */
+function cleanImportPath(importPath: string): string {
+  // Remove leading ./ or ../
+  let cleanPath = importPath.replace(/^\.\.?\//, "");
+  // Remove file extension if present
+  cleanPath = cleanPath.replace(/\.(ts|tsx|js|jsx)$/, "");
+  // Add extension back for pathToNamespace to strip the filename
+  return cleanPath + ".ts";
+}
+
+/**
  * Analyze a single import declaration
  */
 function analyzeImportDeclaration(
@@ -63,18 +91,16 @@ function analyzeImportDeclaration(
 ): void {
   const moduleSpecifier = importDecl.getModuleSpecifierValue();
 
-  // Check if this is a type-only import (skip these - no runtime import needed)
-  if (importDecl.isTypeOnly()) {
-    return;
-  }
-
   // Check for side-effect only import (import './something')
   const namedImports = importDecl.getNamedImports();
   const defaultImport = importDecl.getDefaultImport();
   const namespaceImport = importDecl.getNamespaceImport();
 
   if (!namedImports.length && !defaultImport && !namespaceImport) {
-    result.warnings.push(`Side-effect import '${moduleSpecifier}' skipped (no C# equivalent)`);
+    // Skip type-only imports that have no bindings (shouldn't happen but be safe)
+    if (!importDecl.isTypeOnly()) {
+      result.warnings.push(`Side-effect import '${moduleSpecifier}' skipped (no C# equivalent)`);
+    }
     return;
   }
 
@@ -95,8 +121,7 @@ function analyzeImportDeclaration(
     return;
   }
 
-  // Handle relative imports - inline qualification is used (no using needed)
-  // The type resolution happens at usage site, not at import
+  // Handle relative imports - track types from subdirectories for inline qualification
   if (moduleSpecifier.startsWith("./") || moduleSpecifier.startsWith("../")) {
     // Check for default imports which are not directly supported
     if (defaultImport) {
@@ -105,9 +130,21 @@ function analyzeImportDeclaration(
       );
     }
 
-    // For named imports, we don't add using statements
-    // Types are inline qualified at usage (e.g., Entities.Enemy)
-    // This is handled by the type transformer when it encounters the type
+    // Only track types from subdirectory imports (not root-level files)
+    if (hasSubdirectory(moduleSpecifier)) {
+      // Derive namespace from the import path (clean it first)
+      const cleanedPath = cleanImportPath(moduleSpecifier);
+      const namespace = pathToNamespace(cleanedPath);
+
+      if (namespace) {
+        // Track each imported type with its namespace
+        for (const namedImport of namedImports) {
+          // Use the alias if present, otherwise the original name
+          const localName = namedImport.getAliasNode()?.getText() ?? namedImport.getName();
+          result.importedTypes.set(localName, namespace);
+        }
+      }
+    }
     return;
   }
 

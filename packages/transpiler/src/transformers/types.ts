@@ -9,6 +9,8 @@ import { ResolvedTypeMappings, ArrayTransform, TypedArrayTransform } from "../co
 
 /**
  * Transform a TypeScript type to its C# equivalent
+ * @param typeNode - The TypeScript type node to transform
+ * @param mappings - Type mappings configuration (includes importedTypes for qualification)
  */
 export function transformType(typeNode: TypeNode | undefined, mappings: ResolvedTypeMappings): string {
   if (!typeNode) {
@@ -16,6 +18,7 @@ export function transformType(typeNode: TypeNode | undefined, mappings: Resolved
   }
 
   const kind = typeNode.getKind();
+  const importedTypes = mappings.importedTypes;
 
   // Handle primitive types
   switch (kind) {
@@ -129,10 +132,17 @@ export function transformType(typeNode: TypeNode | undefined, mappings: Resolved
     // Other generics - preserve the structure
     if (typeArgs.length > 0) {
       const transformedArgs = typeArgs.map((a) => transformType(a, mappings));
-      return `${typeName}<${transformedArgs.join(", ")}>`;
+      // Check if the base type is an imported type
+      const namespace = importedTypes?.get(typeName);
+      const qualifiedName = namespace ? `${namespace}.${typeName}` : typeName;
+      return `${qualifiedName}<${transformedArgs.join(", ")}>`;
     }
 
-    // Non-generic type references - return as-is
+    // Non-generic type references - check for imported types
+    const namespace = importedTypes?.get(typeName);
+    if (namespace) {
+      return `${namespace}.${typeName}`;
+    }
     return typeName;
   }
 

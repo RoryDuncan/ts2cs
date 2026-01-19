@@ -136,6 +136,10 @@ export interface ResolvedTypeMappings {
   // Array transformation settings
   arrayTransform: ArrayTransform;
   typedArrayTransform: TypedArrayTransform;
+
+  // Import type qualification (set at transpilation time)
+  /** Map of imported type names to their namespace (for subdirectory imports) */
+  importedTypes?: Map<string, string>;
 }
 
 /**
