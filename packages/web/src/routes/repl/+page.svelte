@@ -1,6 +1,19 @@
 <script lang="ts">
   import { PaneGroup, Pane, PaneResizer } from "paneforge";
+  import CodeEditor from "$lib/components/CodeEditor.svelte";
+  import CodeBlock from "$lib/components/CodeBlock.svelte";
 
+  // Types
+  interface TranspileWarning {
+    message: string;
+    line?: number;
+    column?: number;
+  }
+
+  // Constants
+  const MAX_INPUT_LENGTH = 50_000;
+
+  // State
   let tsInput = $state(`class Player extends Node2D {
   health: number = 100;
   private name: string;
@@ -18,11 +31,22 @@
   }
 }`);
 
-  let csOutput = $state("// Click 'Transpile' to generate C# code");
+  let csOutput = $state("");
   let isTranspiling = $state(false);
+  let error = $state<string | null>(null);
+  let warnings = $state<TranspileWarning[]>([]);
 
+  // API call handler (business logic lives in the container)
   async function transpile() {
+    if (!tsInput.trim()) {
+      error = "Please enter some TypeScript code";
+      return;
+    }
+
     isTranspiling = true;
+    error = null;
+    warnings = [];
+
     try {
       const response = await fetch("/api/transpile", {
         method: "POST",
@@ -32,16 +56,35 @@
 
       const result = await response.json();
 
-      if (result.error) {
-        csOutput = `// Error: ${result.error}`;
+      if (!response.ok) {
+        error = result.error || `Server error: ${response.status}`;
+        csOutput = "";
+        warnings = result.warnings || [];
+      } else if (result.error) {
+        error = result.error;
+        csOutput = "";
+        warnings = result.warnings || [];
       } else {
         csOutput = result.output;
+        warnings = result.warnings || [];
       }
     } catch (err) {
-      csOutput = `// Error: ${err instanceof Error ? err.message : String(err)}`;
+      error = err instanceof Error ? err.message : String(err);
+      csOutput = "";
+      warnings = [];
     } finally {
       isTranspiling = false;
     }
+  }
+
+  // Helper to format warning location
+  function formatWarningLocation(warning: TranspileWarning): string {
+    if (warning.line && warning.column) {
+      return `Line ${warning.line}, Column ${warning.column}`;
+    } else if (warning.line) {
+      return `Line ${warning.line}`;
+    }
+    return "";
   }
 </script>
 
@@ -60,7 +103,13 @@
           </button>
         </div>
         <div class="panel-content">
-          <textarea bind:value={tsInput} class="code-editor" spellcheck="false"></textarea>
+          <CodeEditor
+            bind:value={tsInput}
+            lang="typescript"
+            maxlength={MAX_INPUT_LENGTH}
+            placeholder="Enter TypeScript code..."
+            disabled={isTranspiling}
+          />
         </div>
       </div>
     </Pane>
@@ -73,9 +122,45 @@
       <div class="panel">
         <div class="panel-header">
           <span class="panel-title">C# Output</span>
+          <div class="status-indicators">
+            {#if warnings.length > 0}
+              <span class="warning-indicator" title="{warnings.length} warning(s)">
+                {warnings.length} warning{warnings.length !== 1 ? "s" : ""}
+              </span>
+            {/if}
+            {#if error}
+              <span class="error-indicator">Error</span>
+            {/if}
+          </div>
         </div>
+
+        <!-- Warnings display -->
+        {#if warnings.length > 0}
+          <div class="warnings-panel">
+            {#each warnings as warning, i (i)}
+              <div class="warning-item">
+                <span class="material-symbols-outlined warning-icon">warning</span>
+                <span class="warning-message">{warning.message}</span>
+                {#if warning.line}
+                  <span class="warning-location">{formatWarningLocation(warning)}</span>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
+
         <div class="panel-content">
-          <pre class="code-output"><code>{csOutput}</code></pre>
+          {#if error}
+            <div class="error-display">
+              <pre><code>// Error: {error}</code></pre>
+            </div>
+          {:else if csOutput}
+            <CodeBlock code={csOutput} lang="csharp" loading={isTranspiling} />
+          {:else}
+            <div class="placeholder">
+              <pre><code>// Click 'Transpile' to generate C# code</code></pre>
+            </div>
+          {/if}
         </div>
       </div>
     </Pane>
@@ -153,48 +238,16 @@
     color: var(--text-2);
   }
 
+  .status-indicators {
+    display: flex;
+    gap: var(--size-2);
+    align-items: center;
+  }
+
   .panel-content {
     flex: 1;
-    overflow: auto;
+    overflow: hidden;
     display: flex;
-  }
-
-  .code-editor {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    padding: var(--size-3);
-    background: var(--code-bg);
-    color: var(--code-text);
-    font-family: var(--font-mono);
-    font-size: var(--font-size-1);
-    line-height: var(--font-lineheight-3);
-    border: none;
-    outline: none;
-    resize: none;
-    tab-size: 2;
-  }
-
-  .code-editor::placeholder {
-    color: var(--text-3);
-  }
-
-  .code-output {
-    flex: 1;
-    margin: 0;
-    padding: var(--size-3);
-    background: var(--code-bg);
-    color: var(--code-text);
-    font-size: var(--font-size-1);
-    line-height: var(--font-lineheight-3);
-    overflow: auto;
-    white-space: pre;
-    border-radius: 0;
-  }
-
-  .code-output code {
-    background: none;
-    padding: 0;
   }
 
   .transpile-btn {
@@ -217,5 +270,93 @@
   .transpile-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  .error-indicator {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-0);
+    color: var(--red-5);
+    padding: var(--size-1) var(--size-2);
+    background: color-mix(in srgb, var(--red-5) 15%, transparent);
+    border-radius: var(--radius-2);
+  }
+
+  .warning-indicator {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-0);
+    color: var(--yellow-5);
+    padding: var(--size-1) var(--size-2);
+    background: color-mix(in srgb, var(--yellow-5) 15%, transparent);
+    border-radius: var(--radius-2);
+  }
+
+  .warnings-panel {
+    background: color-mix(in srgb, var(--yellow-9) 30%, var(--surface-2));
+    border-bottom: 1px solid var(--yellow-7);
+    padding: var(--size-2) var(--size-3);
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  .warning-item {
+    display: flex;
+    align-items: center;
+    gap: var(--size-2);
+    padding: var(--size-1) 0;
+    font-size: var(--font-size-0);
+    color: var(--yellow-3);
+    line-height: 1.4;
+  }
+
+  .warning-item + .warning-item {
+    border-top: 1px solid var(--yellow-8);
+    margin-top: var(--size-1);
+    padding-top: var(--size-2);
+  }
+
+  .warning-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .warning-message {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .warning-location {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    color: var(--yellow-5);
+    font-size: var(--font-size-0);
+    padding: var(--size-1) var(--size-2);
+    background: color-mix(in srgb, var(--yellow-7) 30%, transparent);
+    border-radius: var(--radius-1);
+  }
+
+  .error-display,
+  .placeholder {
+    flex: 1;
+    padding: var(--size-3);
+    background: var(--code-bg);
+    overflow: auto;
+  }
+
+  .error-display pre,
+  .placeholder pre {
+    margin: 0;
+    color: var(--red-4);
+  }
+
+  .placeholder pre {
+    color: var(--text-3);
+  }
+
+  .error-display code,
+  .placeholder code {
+    background: none;
+    padding: 0;
+    font-family: var(--font-mono);
   }
 </style>
