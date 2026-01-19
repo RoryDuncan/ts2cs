@@ -8,6 +8,7 @@
   import { buildShareUrl } from "$lib/share";
   import { replaceState } from "$app/navigation";
   import type { RouteId, SubmitFunction } from "./$types";
+  import { onMount } from "svelte";
 
   // Types
   type TranspileWarning = {
@@ -100,6 +101,20 @@
       }
     };
   };
+
+  let direction = $state<"horizontal" | "vertical">("horizontal");
+
+  onMount(() => {
+    const mm = window.matchMedia("(min-width: 1200px)");
+
+    mm.addEventListener("change", (ev) => {
+      direction = ev.matches ? "horizontal" : "vertical";
+    });
+
+    if (mm.matches) {
+      direction = "horizontal";
+    }
+  });
 </script>
 
 <svelte:head>
@@ -107,7 +122,7 @@
 </svelte:head>
 
 <div class="repl-container">
-  <PaneGroup direction="horizontal" class="pane-group">
+  <PaneGroup {direction} class="pane-group">
     <Pane defaultSize={50} minSize={20} class="pane">
       <div class="panel">
         <form method="POST" action="?/transpile" bind:this={formEl} use:enhance={enhancedSubmit}>
