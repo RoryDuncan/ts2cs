@@ -1,24 +1,27 @@
-import { describe, it } from 'vitest';
-import { expectCSharp, expectCSharpWithConfig, wrapExpected } from '../helpers.js';
+import { describe, it } from "vitest";
+import { expectCSharp, expectCSharpWithConfig, wrapExpected } from "../helpers.js";
 
 /**
  * Tests for edge cases and potential bugs
  */
 
-describe('Edge Cases', () => {
-  describe('C# Keyword Escaping', () => {
+describe("Edge Cases", () => {
+  describe("C# Keyword Escaping", () => {
     it('should escape parameter named "base"', () => {
       const input = `class Player extends Node2D {
   takeDamage(base: number): void {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Player : Node2D
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
 {
     public void takeDamage(float @base)
     {
     }
-}`, ['Godot']);
+}`,
+        ["Godot"]
+      );
 
       expectCSharp(input, expected);
     });
@@ -39,7 +42,7 @@ describe('Edge Cases', () => {
       expectCSharp(input, expected);
     });
 
-    it('should escape multiple keyword parameters', () => {
+    it("should escape multiple keyword parameters", () => {
       const input = `class Utils {
   process(event: string, base: number, object: boolean): void {
   }
@@ -81,7 +84,7 @@ describe('Edge Cases', () => {
       expectCSharp(input, expected);
     });
 
-    it('should not escape non-keyword names', () => {
+    it("should not escape non-keyword names", () => {
       const input = `class Player {
   health: number;
   name: string;
@@ -97,8 +100,8 @@ describe('Edge Cases', () => {
     });
   });
 
-  describe('Empty Array Type Inference', () => {
-    it('should generate typed empty array for string[] with native array config', () => {
+  describe("Empty Array Type Inference", () => {
+    it("should generate typed empty array for string[] with native array config", () => {
       const input = `class Inventory {
   items: string[] = [];
 }`;
@@ -108,10 +111,10 @@ describe('Edge Cases', () => {
     public string[] items = new string[] { };
 }`);
 
-      expectCSharpWithConfig(input, expected, { arrayTransform: 'array' });
+      expectCSharpWithConfig(input, expected, { arrayTransform: "array" });
     });
 
-    it('should generate typed empty array for number[] with native array config', () => {
+    it("should generate typed empty array for number[] with native array config", () => {
       const input = `class Stats {
   scores: number[] = [];
 }`;
@@ -121,10 +124,10 @@ describe('Edge Cases', () => {
     public float[] scores = new float[] { };
 }`);
 
-      expectCSharpWithConfig(input, expected, { arrayTransform: 'array' });
+      expectCSharpWithConfig(input, expected, { arrayTransform: "array" });
     });
 
-    it('should generate typed empty array for custom type with native array config', () => {
+    it("should generate typed empty array for custom type with native array config", () => {
       const input = `class Team {
   players: Player[] = [];
 }`;
@@ -134,10 +137,10 @@ describe('Edge Cases', () => {
     public Player[] players = new Player[] { };
 }`);
 
-      expectCSharpWithConfig(input, expected, { arrayTransform: 'array' });
+      expectCSharpWithConfig(input, expected, { arrayTransform: "array" });
     });
 
-    it('should handle non-empty array literals with native array config', () => {
+    it("should handle non-empty array literals with native array config", () => {
       const input = `class Config {
   values: number[] = [1, 2, 3];
 }`;
@@ -147,7 +150,7 @@ describe('Edge Cases', () => {
     public float[] values = new[] { 1, 2, 3 };
 }`);
 
-      expectCSharpWithConfig(input, expected, { arrayTransform: 'array' });
+      expectCSharpWithConfig(input, expected, { arrayTransform: "array" });
     });
   });
 });

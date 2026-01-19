@@ -2,12 +2,19 @@
  * Method transformation utilities
  */
 
-import { MethodDeclaration, ParameterDeclaration, ClassDeclaration, ConstructorDeclaration, Block, SyntaxKind } from 'ts-morph';
-import { ResolvedTypeMappings } from '../config/schema.js';
-import { transformType } from './types.js';
-import { getModifiers, formatModifiers, AccessModifier } from './modifiers.js';
-import { toMethodName, escapeCSharpKeyword } from '../utils/naming.js';
-import { transpileStatements } from './statements.js';
+import {
+  MethodDeclaration,
+  ParameterDeclaration,
+  ClassDeclaration,
+  ConstructorDeclaration,
+  Block,
+  SyntaxKind
+} from "ts-morph";
+import { ResolvedTypeMappings } from "../config/schema.js";
+import { transformType } from "./types.js";
+import { getModifiers, formatModifiers, AccessModifier } from "./modifiers.js";
+import { toMethodName, escapeCSharpKeyword } from "../utils/naming.js";
+import { transpileStatements } from "./statements.js";
 
 /**
  * Represents a parameter property that should generate a field
@@ -22,11 +29,7 @@ interface ParameterProperty {
 /**
  * Transpile a class method to C#
  */
-export function transpileMethod(
-  method: MethodDeclaration,
-  mappings: ResolvedTypeMappings,
-  indent = '    '
-): string {
+export function transpileMethod(method: MethodDeclaration, mappings: ResolvedTypeMappings, indent = "    "): string {
   const tsName = method.getName();
   const csName = toMethodName(tsName);
   const returnTypeNode = method.getReturnTypeNode();
@@ -38,7 +41,7 @@ export function transpileMethod(
   const returnType = transformType(returnTypeNode, mappings);
 
   // Build parameter list
-  const paramList = parameters.map(p => transpileParameter(p, mappings)).join(', ');
+  const paramList = parameters.map((p) => transpileParameter(p, mappings)).join(", ");
 
   // Build method signature
   const modifierStr = formatModifiers(modifiers);
@@ -63,10 +66,7 @@ export function transpileMethod(
 /**
  * Transpile a parameter declaration to C#
  */
-export function transpileParameter(
-  param: ParameterDeclaration,
-  mappings: ResolvedTypeMappings
-): string {
+export function transpileParameter(param: ParameterDeclaration, mappings: ResolvedTypeMappings): string {
   const name = param.getName();
   const escapedName = escapeCSharpKeyword(name);
   const typeNode = param.getTypeNode();
@@ -74,17 +74,17 @@ export function transpileParameter(
   const isOptional = param.hasQuestionToken();
 
   let csharpType = transformType(typeNode, mappings);
-  
+
   // Make optional parameters nullable
-  if (isOptional && !csharpType.endsWith('?')) {
-    csharpType += '?';
+  if (isOptional && !csharpType.endsWith("?")) {
+    csharpType += "?";
   }
 
   let result = `${csharpType} ${escapedName}`;
 
   // Add default value for optional parameters
   if (isOptional && !initializer) {
-    result += ' = null';
+    result += " = null";
   } else if (initializer) {
     result += ` = ${transpileInitializerValue(initializer.getText())}`;
   }
@@ -101,68 +101,58 @@ export function extractParameterProperties(
   mappings: ResolvedTypeMappings
 ): ParameterProperty[] {
   const properties: ParameterProperty[] = [];
-  
+
   for (const param of ctor.getParameters()) {
     const modifiers = param.getModifiers();
     let access: AccessModifier | null = null;
-    
+
     for (const mod of modifiers) {
       const kind = mod.getKind();
       if (kind === SyntaxKind.PublicKeyword) {
-        access = 'public';
+        access = "public";
         break;
       } else if (kind === SyntaxKind.PrivateKeyword) {
-        access = 'private';
+        access = "private";
         break;
       } else if (kind === SyntaxKind.ProtectedKeyword) {
-        access = 'protected';
+        access = "protected";
         break;
       }
     }
-    
+
     if (access) {
       const name = param.getName();
       const typeNode = param.getTypeNode();
       const csType = transformType(typeNode, mappings);
-      
+
       properties.push({
         name,
         escapedName: escapeCSharpKeyword(name),
         type: csType,
-        access,
+        access
       });
     }
   }
-  
+
   return properties;
 }
 
 /**
  * Generate field declarations for parameter properties
  */
-export function generateParameterPropertyFields(
-  properties: ParameterProperty[],
-  indent = '    '
-): string[] {
-  return properties.map(prop => 
-    `${indent}${prop.access} ${prop.type} ${prop.escapedName};`
-  );
+export function generateParameterPropertyFields(properties: ParameterProperty[], indent = "    "): string[] {
+  return properties.map((prop) => `${indent}${prop.access} ${prop.type} ${prop.escapedName};`);
 }
 
 /**
  * Generate assignment statements for parameter properties
  */
-function generateParameterPropertyAssignments(
-  properties: ParameterProperty[],
-  indent: string
-): string {
+function generateParameterPropertyAssignments(properties: ParameterProperty[], indent: string): string {
   if (properties.length === 0) {
-    return '';
+    return "";
   }
-  
-  return properties.map(prop => 
-    `${indent}this.${prop.escapedName} = ${prop.escapedName};`
-  ).join('\n');
+
+  return properties.map((prop) => `${indent}this.${prop.escapedName} = ${prop.escapedName};`).join("\n");
 }
 
 /**
@@ -172,7 +162,7 @@ export function transpileConstructor(
   ctor: ConstructorDeclaration,
   className: string,
   mappings: ResolvedTypeMappings,
-  indent = '    ',
+  indent = "    ",
   parameterProperties: ParameterProperty[] = []
 ): string {
   const parameters = ctor.getParameters();
@@ -180,25 +170,23 @@ export function transpileConstructor(
   const modifiers = getModifiers(ctor);
 
   // Build parameter list (without access modifiers for parameter properties)
-  const paramList = parameters.map(p => transpileConstructorParameter(p, mappings)).join(', ');
+  const paramList = parameters.map((p) => transpileConstructorParameter(p, mappings)).join(", ");
 
   // Build constructor signature
   const modifierStr = modifiers.access;
   const signature = `${indent}${modifierStr} ${className}(${paramList})`;
 
   // Generate parameter property assignments
-  const propAssignments = generateParameterPropertyAssignments(parameterProperties, indent + '    ');
+  const propAssignments = generateParameterPropertyAssignments(parameterProperties, indent + "    ");
 
   // Transpile constructor body
-  let bodyContent = '';
+  let bodyContent = "";
   if (body) {
     bodyContent = transpileMethodBodyBlock(body as Block, mappings, indent);
   }
 
   // Combine property assignments with body content
-  const allBodyContent = [propAssignments, bodyContent]
-    .filter(s => s.trim())
-    .join('\n');
+  const allBodyContent = [propAssignments, bodyContent].filter((s) => s.trim()).join("\n");
 
   // Handle empty body
   if (!allBodyContent.trim()) {
@@ -211,10 +199,7 @@ export function transpileConstructor(
 /**
  * Transpile a constructor parameter (without access modifiers)
  */
-function transpileConstructorParameter(
-  param: ParameterDeclaration,
-  mappings: ResolvedTypeMappings
-): string {
+function transpileConstructorParameter(param: ParameterDeclaration, mappings: ResolvedTypeMappings): string {
   const name = param.getName();
   const escapedName = escapeCSharpKeyword(name);
   const typeNode = param.getTypeNode();
@@ -222,17 +207,17 @@ function transpileConstructorParameter(
   const isOptional = param.hasQuestionToken();
 
   let csharpType = transformType(typeNode, mappings);
-  
+
   // Make optional parameters nullable
-  if (isOptional && !csharpType.endsWith('?')) {
-    csharpType += '?';
+  if (isOptional && !csharpType.endsWith("?")) {
+    csharpType += "?";
   }
 
   let result = `${csharpType} ${escapedName}`;
 
   // Add default value for optional parameters
   if (isOptional && !initializer) {
-    result += ' = null';
+    result += " = null";
   } else if (initializer) {
     result += ` = ${transpileInitializerValue(initializer.getText())}`;
   }
@@ -246,10 +231,10 @@ function transpileConstructorParameter(
 export function transpileClassMethods(
   classDecl: ClassDeclaration,
   mappings: ResolvedTypeMappings,
-  indent = '    '
+  indent = "    "
 ): string[] {
   const methods = classDecl.getMethods();
-  return methods.map(method => transpileMethod(method, mappings, indent));
+  return methods.map((method) => transpileMethod(method, mappings, indent));
 }
 
 /**
@@ -266,45 +251,41 @@ export interface ConstructorTranspileResult {
 export function transpileClassConstructors(
   classDecl: ClassDeclaration,
   mappings: ResolvedTypeMappings,
-  indent = '    '
+  indent = "    "
 ): ConstructorTranspileResult {
   const ctors = classDecl.getConstructors();
-  const className = classDecl.getName() ?? 'UnnamedClass';
-  
+  const className = classDecl.getName() ?? "UnnamedClass";
+
   const allFields: string[] = [];
   const allConstructors: string[] = [];
-  
+
   for (const ctor of ctors) {
     // Extract parameter properties
     const paramProps = extractParameterProperties(ctor, mappings);
-    
+
     // Generate fields for parameter properties
     const fields = generateParameterPropertyFields(paramProps, indent);
     allFields.push(...fields);
-    
+
     // Generate constructor with parameter property assignments
     const ctorCode = transpileConstructor(ctor, className, mappings, indent, paramProps);
     allConstructors.push(ctorCode);
   }
-  
+
   return { fields: allFields, constructors: allConstructors };
 }
 
 /**
  * Transpile a method body block using the statement transpiler
  */
-function transpileMethodBodyBlock(
-  block: Block,
-  mappings: ResolvedTypeMappings,
-  indent: string
-): string {
+function transpileMethodBodyBlock(block: Block, mappings: ResolvedTypeMappings, indent: string): string {
   const statements = block.getStatements();
-  
+
   if (statements.length === 0) {
-    return '';
+    return "";
   }
-  
-  return transpileStatements(statements, mappings, indent + '    ');
+
+  return transpileStatements(statements, mappings, indent + "    ");
 }
 
 /**
@@ -312,15 +293,14 @@ function transpileMethodBodyBlock(
  */
 function transpileInitializerValue(value: string): string {
   // Basic transformations
-  if (value === 'undefined') return 'null';
-  if (value === 'null') return 'null';
-  if (value === 'true' || value === 'false') return value;
-  
+  if (value === "undefined") return "null";
+  if (value === "null") return "null";
+  if (value === "true" || value === "false") return value;
+
   // String literals - convert single quotes to double
   if (value.startsWith("'") && value.endsWith("'")) {
     return `"${value.slice(1, -1)}"`;
   }
-  
+
   return value;
 }
-

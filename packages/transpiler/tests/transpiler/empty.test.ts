@@ -1,15 +1,15 @@
-import { describe, it } from 'vitest';
-import { expectCSharp, GENERATED_HEADER } from '../helpers.js';
+import { describe, it } from "vitest";
+import { expectCSharp, GENERATED_HEADER } from "../helpers.js";
 
-describe('Empty File Transpilation', () => {
-  it('should produce CS with only header comment for empty TS file', () => {
-    const input = '';
+describe("Empty File Transpilation", () => {
+  it("should produce CS with only header comment for empty TS file", () => {
+    const input = "";
     const expected = GENERATED_HEADER;
 
     expectCSharp(input, expected);
   });
 
-  it('should produce CS with only header for TS with only line comments', () => {
+  it("should produce CS with only header for TS with only line comments", () => {
     const input = `// This is a comment
 // Another comment`;
     const expected = GENERATED_HEADER;
@@ -17,7 +17,7 @@ describe('Empty File Transpilation', () => {
     expectCSharp(input, expected);
   });
 
-  it('should produce CS with only header for TS with only block comments', () => {
+  it("should produce CS with only header for TS with only block comments", () => {
     const input = `/* Block comment */
 /* 
   Multi-line
@@ -28,7 +28,7 @@ describe('Empty File Transpilation', () => {
     expectCSharp(input, expected);
   });
 
-  it('should produce CS with only header for TS with mixed comments', () => {
+  it("should produce CS with only header for TS with mixed comments", () => {
     const input = `// Line comment
 /* Block comment */
 // Another line comment`;
@@ -37,7 +37,7 @@ describe('Empty File Transpilation', () => {
     expectCSharp(input, expected);
   });
 
-  it('should produce CS with only header for TS with only whitespace', () => {
+  it("should produce CS with only header for TS with only whitespace", () => {
     const input = `   
     
   `;
@@ -46,4 +46,3 @@ describe('Empty File Transpilation', () => {
     expectCSharp(input, expected);
   });
 });
-

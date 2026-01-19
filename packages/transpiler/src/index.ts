@@ -1,35 +1,29 @@
 /**
  * ts2cs-transpiler
- * 
+ *
  * TypeScript to C# transpiler for Godot 4.x
- * 
+ *
  * This module provides the main API for transpiling TypeScript code
  * to Godot-compatible C# scripts.
  */
 
-import { 
-  parseConfig as parseConfigFn,
-  type TranspilerConfig,
-} from './config/schema.js';
-import { 
-  createContext,
-  transpileSourceFileWithWarnings,
-} from './transpiler.js';
-import { Project } from 'ts-morph';
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import { parseConfig as parseConfigFn, type TranspilerConfig } from "./config/schema.js";
+import { createContext, transpileSourceFileWithWarnings } from "./transpiler.js";
+import { Project } from "ts-morph";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 
-export { 
-  TranspilerConfigSchema, 
-  parseConfig, 
+export {
+  TranspilerConfigSchema,
+  parseConfig,
   safeParseConfig,
   getTypeMappings,
-  getNamespace,
-} from './config/schema.js';
-export type { TranspilerConfig, TypeMappings, NumberType } from './config/schema.js';
+  getNamespace
+} from "./config/schema.js";
+export type { TranspilerConfig, TypeMappings, NumberType } from "./config/schema.js";
 
 // Re-export the simpler transpileSource function for quick usage
-export { transpileSource, GENERATED_HEADER } from './transpiler.js';
+export { transpileSource, GENERATED_HEADER } from "./transpiler.js";
 
 export interface TranspileResult {
   /** Whether the transpilation was successful */
@@ -70,17 +64,17 @@ export interface TranspileWarning {
 
 /**
  * Main transpiler class
- * 
+ *
  * @example
  * ```ts
  * import { Transpiler } from 'ts2cs-transpiler';
- * 
+ *
  * const transpiler = new Transpiler({
  *   inputDir: './src',
  *   outputDir: './csharp',
  *   namespace: 'MyGame',
  * });
- * 
+ *
  * const result = await transpiler.transpile();
  * ```
  */
@@ -111,8 +105,8 @@ export class Transpiler {
       compilerOptions: {
         target: 99, // ESNext
         module: 99, // ESNext
-        strict: true,
-      },
+        strict: true
+      }
     });
 
     // Add all source files to the project
@@ -127,13 +121,13 @@ export class Transpiler {
 
       // Calculate relative path from input dir
       const relativePath = path.relative(this.config.inputDir, tsFile);
-      
+
       try {
         const context = createContext(this.config, relativePath);
         const result = transpileSourceFileWithWarnings(sourceFile, context);
 
         // Calculate output path
-        const outputRelativePath = relativePath.replace(/\.tsx?$/, '.cs');
+        const outputRelativePath = relativePath.replace(/\.tsx?$/, ".cs");
         const outputPath = path.join(this.config.outputDir, outputRelativePath);
 
         // Store the transpiled content
@@ -146,7 +140,7 @@ export class Transpiler {
             line: w.line ?? 1,
             column: w.column ?? 1,
             message: w.message,
-            code: 'TS2CS_WARNING',
+            code: "TS2CS_WARNING"
           });
         }
       } catch (err) {
@@ -155,7 +149,7 @@ export class Transpiler {
           line: 1,
           column: 1,
           message: err instanceof Error ? err.message : String(err),
-          code: 'TS2CS_ERROR',
+          code: "TS2CS_ERROR"
         });
       }
     }
@@ -169,44 +163,44 @@ export class Transpiler {
       success: errors.length === 0,
       files,
       errors,
-      warnings,
+      warnings
     };
   }
 
   /**
    * Transpile a single TypeScript source string
    */
-  transpileSource(source: string, fileName = 'source.ts'): TranspileResult {
+  transpileSource(source: string, fileName = "source.ts"): TranspileResult {
     const project = new Project({
       useInMemoryFileSystem: true,
       compilerOptions: {
         target: 99, // ESNext
         module: 99, // ESNext
-        strict: true,
-      },
+        strict: true
+      }
     });
 
     const sourceFile = project.createSourceFile(fileName, source);
     const context = createContext(this.config, fileName);
     const result = transpileSourceFileWithWarnings(sourceFile, context);
-    
+
     // Convert output filename from .ts to .cs
-    const outputFileName = fileName.replace(/\.ts?$/, '.cs');
-    
+    const outputFileName = fileName.replace(/\.ts?$/, ".cs");
+
     // Convert internal warnings to public warning format
-    const warnings: TranspileWarning[] = result.warnings.map(w => ({
+    const warnings: TranspileWarning[] = result.warnings.map((w) => ({
       file: fileName,
       line: w.line ?? 1,
       column: w.column ?? 1,
       message: w.message,
-      code: 'TS2CS_WARNING',
+      code: "TS2CS_WARNING"
     }));
 
     return {
       success: true,
       files: new Map([[outputFileName, result.code]]),
       errors: [],
-      warnings,
+      warnings
     };
   }
 }
@@ -224,28 +218,28 @@ export function createTranspiler(config: unknown): Transpiler {
  */
 async function findTypeScriptFiles(dir: string): Promise<string[]> {
   const files: string[] = [];
-  
+
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (entry.isDirectory()) {
         // Skip node_modules and hidden directories
-        if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
+        if (entry.name === "node_modules" || entry.name.startsWith(".")) {
           continue;
         }
         const subFiles = await findTypeScriptFiles(fullPath);
         files.push(...subFiles);
-      } else if (entry.isFile() && /\.tsx?$/.test(entry.name) && !entry.name.endsWith('.d.ts')) {
+      } else if (entry.isFile() && /\.tsx?$/.test(entry.name) && !entry.name.endsWith(".d.ts")) {
         files.push(fullPath);
       }
     }
   } catch {
     // Directory doesn't exist or is not readable
   }
-  
+
   return files;
 }
 
@@ -257,8 +251,8 @@ async function writeOutputFiles(files: Map<string, string>, _outputDir: string):
     // Ensure the directory exists
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
-    
+
     // Write the file
-    await fs.writeFile(filePath, content, 'utf-8');
+    await fs.writeFile(filePath, content, "utf-8");
   }
 }

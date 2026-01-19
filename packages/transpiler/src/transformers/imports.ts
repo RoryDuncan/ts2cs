@@ -2,10 +2,10 @@
  * Import transformation utilities
  */
 
-import { SourceFile, ImportDeclaration } from 'ts-morph';
-import { TranspilerConfig, getNamespace } from '../config/schema.js';
-import { isGodotClass } from '../godot/index.js';
-import { pathToNamespace } from '../utils/naming.js';
+import { SourceFile, ImportDeclaration } from "ts-morph";
+import { TranspilerConfig, getNamespace } from "../config/schema.js";
+import { isGodotClass } from "../godot/index.js";
+import { pathToNamespace } from "../utils/naming.js";
 
 /**
  * Collected using statements for a C# file
@@ -29,15 +29,15 @@ export function analyzeImports(sourceFile: SourceFile, config: TranspilerConfig)
     usings: new Set(),
     typeAliases: new Map(),
     needsGodot: false,
-    warnings: [],
+    warnings: []
   };
 
   const imports = sourceFile.getImportDeclarations();
-  
+
   for (const importDecl of imports) {
     analyzeImportDeclaration(importDecl, config, result);
   }
-  
+
   // Also check for Godot class usage in extends clauses
   const classes = sourceFile.getClasses();
   for (const cls of classes) {
@@ -49,7 +49,7 @@ export function analyzeImports(sourceFile: SourceFile, config: TranspilerConfig)
       }
     }
   }
-  
+
   return result;
 }
 
@@ -62,31 +62,31 @@ function analyzeImportDeclaration(
   result: UsingStatements
 ): void {
   const moduleSpecifier = importDecl.getModuleSpecifierValue();
-  
+
   // Check if this is a type-only import (skip these - no runtime import needed)
   if (importDecl.isTypeOnly()) {
     return;
   }
-  
+
   // Check for side-effect only import (import './something')
   const namedImports = importDecl.getNamedImports();
   const defaultImport = importDecl.getDefaultImport();
   const namespaceImport = importDecl.getNamespaceImport();
-  
+
   if (!namedImports.length && !defaultImport && !namespaceImport) {
     result.warnings.push(`Side-effect import '${moduleSpecifier}' skipped (no C# equivalent)`);
     return;
   }
-  
+
   // Handle Godot imports
-  if (moduleSpecifier === 'godot' || moduleSpecifier === '@godot') {
+  if (moduleSpecifier === "godot" || moduleSpecifier === "@godot") {
     result.needsGodot = true;
-    
+
     // Check for aliased imports from Godot
     for (const namedImport of namedImports) {
       const name = namedImport.getName();
       const alias = namedImport.getAliasNode()?.getText();
-      
+
       if (alias && alias !== name) {
         // Generate type alias: using Vec2 = Godot.Vector2;
         result.typeAliases.set(alias, `Godot.${name}`);
@@ -94,21 +94,23 @@ function analyzeImportDeclaration(
     }
     return;
   }
-  
+
   // Handle relative imports - inline qualification is used (no using needed)
   // The type resolution happens at usage site, not at import
-  if (moduleSpecifier.startsWith('./') || moduleSpecifier.startsWith('../')) {
+  if (moduleSpecifier.startsWith("./") || moduleSpecifier.startsWith("../")) {
     // Check for default imports which are not directly supported
     if (defaultImport) {
-      result.warnings.push(`Default import '${defaultImport.getText()}' from '${moduleSpecifier}' not supported - use named exports instead`);
+      result.warnings.push(
+        `Default import '${defaultImport.getText()}' from '${moduleSpecifier}' not supported - use named exports instead`
+      );
     }
-    
+
     // For named imports, we don't add using statements
     // Types are inline qualified at usage (e.g., Entities.Enemy)
     // This is handled by the type transformer when it encounters the type
     return;
   }
-  
+
   // Handle package imports (node_modules style)
   // Warn about unsupported external packages
   result.warnings.push(`External import '${moduleSpecifier}' not supported - may need manual conversion`);
@@ -120,22 +122,20 @@ function analyzeImportDeclaration(
  */
 export function convertImportToNamespace(importPath: string, config: TranspilerConfig): string | null {
   const rootNamespace = getNamespace(config);
-  
+
   // Remove leading ./ or ../
-  let cleanPath = importPath
-    .replace(/^\.\//, '')
-    .replace(/^\.\.\//, '');
-  
+  let cleanPath = importPath.replace(/^\.\//, "").replace(/^\.\.\//, "");
+
   // Remove file extension if present
-  cleanPath = cleanPath.replace(/\.(ts|tsx|js|jsx)$/, '');
-  
+  cleanPath = cleanPath.replace(/\.(ts|tsx|js|jsx)$/, "");
+
   // Convert path to namespace
-  const pathNs = pathToNamespace(cleanPath + '.ts'); // Add extension for path parsing
-  
+  const pathNs = pathToNamespace(cleanPath + ".ts"); // Add extension for path parsing
+
   if (!pathNs) {
     return rootNamespace;
   }
-  
+
   return `${rootNamespace}.${pathNs}`;
 }
 
@@ -144,27 +144,26 @@ export function convertImportToNamespace(importPath: string, config: TranspilerC
  */
 export function generateUsingStatements(usings: UsingStatements): string[] {
   const statements: string[] = [];
-  
+
   // System usings first (if any)
   // For now, we don't add system usings automatically
-  
+
   // Godot using
   if (usings.needsGodot) {
-    statements.push('using Godot;');
+    statements.push("using Godot;");
   }
-  
+
   // Other usings
   const sortedUsings = Array.from(usings.usings).sort();
   for (const ns of sortedUsings) {
     statements.push(`using ${ns};`);
   }
-  
+
   // Type aliases (using Alias = Namespace.Type;)
   const sortedAliases = Array.from(usings.typeAliases.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   for (const [alias, fullType] of sortedAliases) {
     statements.push(`using ${alias} = ${fullType};`);
   }
-  
+
   return statements;
 }
-

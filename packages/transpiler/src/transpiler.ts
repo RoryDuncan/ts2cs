@@ -1,14 +1,14 @@
-import { Project, SourceFile, ClassDeclaration, SyntaxKind } from 'ts-morph';
-import { isGodotClass } from './godot/index.js';
-import { TranspilerConfig, getTypeMappings, ResolvedTypeMappings, parseConfig, getNamespace } from './config/schema.js';
-import { transpileClassProperties } from './transformers/properties.js';
-import { transpileClassMethods, transpileClassConstructors } from './transformers/methods.js';
-import { transpileClassAccessors } from './transformers/accessors.js';
-import { transpileEnums } from './transformers/enums.js';
-import { transpileInterfaces } from './transformers/interfaces.js';
-import { transpileDiscriminatedUnion } from './transformers/discriminated-unions.js';
-import { isDiscriminatedUnion } from './transformers/unions.js';
-import { getNamespaceFromPath, wrapInNamespace } from './transformers/namespaces.js';
+import { Project, SourceFile, ClassDeclaration, SyntaxKind } from "ts-morph";
+import { isGodotClass } from "./godot/index.js";
+import { TranspilerConfig, getTypeMappings, ResolvedTypeMappings, parseConfig, getNamespace } from "./config/schema.js";
+import { transpileClassProperties } from "./transformers/properties.js";
+import { transpileClassMethods, transpileClassConstructors } from "./transformers/methods.js";
+import { transpileClassAccessors } from "./transformers/accessors.js";
+import { transpileEnums } from "./transformers/enums.js";
+import { transpileInterfaces } from "./transformers/interfaces.js";
+import { transpileDiscriminatedUnion } from "./transformers/discriminated-unions.js";
+import { isDiscriminatedUnion } from "./transformers/unions.js";
+import { getNamespaceFromPath, wrapInNamespace } from "./transformers/namespaces.js";
 
 /**
  * The auto-generated header comment added to all C# files
@@ -38,8 +38,8 @@ export interface TranspileResult {
  * Default config for single-source transpilation
  */
 const DEFAULT_CONFIG: TranspilerConfig = parseConfig({
-  inputDir: './src',
-  outputDir: './out',
+  inputDir: "./src",
+  outputDir: "./out"
 });
 
 /**
@@ -58,33 +58,27 @@ export interface TranspileContext {
  * Create a transpile context from config
  */
 export function createContext(config?: Partial<TranspilerConfig>, filePath?: string): TranspileContext {
-  const fullConfig = config 
-    ? parseConfig({ ...DEFAULT_CONFIG, ...config })
-    : DEFAULT_CONFIG;
-  
+  const fullConfig = config ? parseConfig({ ...DEFAULT_CONFIG, ...config }) : DEFAULT_CONFIG;
+
   return {
     config: fullConfig,
     mappings: getTypeMappings(fullConfig),
     filePath,
-    rootNamespace: getNamespace(fullConfig),
+    rootNamespace: getNamespace(fullConfig)
   };
 }
 
 /**
  * Transpile a single TypeScript source string to C#
  */
-export function transpileSource(
-  tsSource: string, 
-  fileName = 'source.ts',
-  config?: Partial<TranspilerConfig>
-): string {
+export function transpileSource(tsSource: string, fileName = "source.ts", config?: Partial<TranspilerConfig>): string {
   const project = new Project({
     useInMemoryFileSystem: true,
     compilerOptions: {
       target: 99, // ESNext
       module: 99, // ESNext
-      strict: true,
-    },
+      strict: true
+    }
   });
 
   const sourceFile = project.createSourceFile(fileName, tsSource);
@@ -97,45 +91,42 @@ export function transpileSource(
  */
 export function transpileSourceFile(sourceFile: SourceFile, context: TranspileContext): string {
   const result = transpileSourceFileWithWarnings(sourceFile, context);
-  
+
   // Log warnings to console
   for (const warning of result.warnings) {
-    console.warn(`[ts2cs] Warning: ${warning.message}${warning.line ? ` (line ${warning.line})` : ''}`);
+    console.warn(`[ts2cs] Warning: ${warning.message}${warning.line ? ` (line ${warning.line})` : ""}`);
   }
-  
+
   return result.code;
 }
 
 /**
  * Transpile a ts-morph SourceFile to C# with full result including warnings
  */
-export function transpileSourceFileWithWarnings(
-  sourceFile: SourceFile, 
-  context: TranspileContext
-): TranspileResult {
+export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context: TranspileContext): TranspileResult {
   const warnings: TranspileWarning[] = [];
   const classes = sourceFile.getClasses();
   const enums = sourceFile.getEnums();
   const interfaces = sourceFile.getInterfaces();
   const typeAliases = sourceFile.getTypeAliases();
-  
+
   // Check for top-level statements
   const topLevelWarnings = checkTopLevelStatements(sourceFile);
   warnings.push(...topLevelWarnings);
-  
+
   // Find discriminated unions from type aliases
-  const discriminatedUnions = typeAliases.filter(ta => isDiscriminatedUnion(ta));
-  
+  const discriminatedUnions = typeAliases.filter((ta) => isDiscriminatedUnion(ta));
+
   if (classes.length === 0 && enums.length === 0 && interfaces.length === 0 && discriminatedUnions.length === 0) {
     // Empty file or no declarations - just return header
     return { code: GENERATED_HEADER, warnings };
   }
 
-  const parts: string[] = [GENERATED_HEADER, ''];
+  const parts: string[] = [GENERATED_HEADER, ""];
   const usings: string[] = [];
 
   // Check if any class extends a Godot type
-  const needsGodotUsing = classes.some(cls => {
+  const needsGodotUsing = classes.some((cls) => {
     const baseClass = cls.getExtends();
     if (!baseClass) return false;
     const baseName = baseClass.getExpression().getText();
@@ -143,42 +134,42 @@ export function transpileSourceFileWithWarnings(
   });
 
   if (needsGodotUsing) {
-    usings.push('using Godot;');
+    usings.push("using Godot;");
   }
-  
+
   // Check if the file contains any array/collection type usages
   const fileText = sourceFile.getFullText();
   const hasArrayTypes = /\[\s*\]|Array\s*<|Map\s*<|Set\s*<|Record\s*</.test(fileText);
-  
+
   // Check if we need System.Collections.Generic (for List<T>, Dictionary, HashSet)
   // This is needed when arrayTransform is 'list' AND we actually use array types
-  if (context.mappings.arrayTransform === 'list' && hasArrayTypes) {
-    usings.push('using System.Collections.Generic;');
+  if (context.mappings.arrayTransform === "list" && hasArrayTypes) {
+    usings.push("using System.Collections.Generic;");
   }
-  
+
   // Check if we need Godot.Collections (for Godot arrays)
-  if (context.mappings.arrayTransform === 'godot-array' && hasArrayTypes) {
-    usings.push('using Godot.Collections;');
+  if (context.mappings.arrayTransform === "godot-array" && hasArrayTypes) {
+    usings.push("using Godot.Collections;");
   }
-  
+
   // Add using statements
   if (usings.length > 0) {
     parts.push(...usings);
-    parts.push('');
+    parts.push("");
   }
 
   // Transpile enums
   const enumCode = transpileEnums(enums, context.mappings);
   for (const code of enumCode) {
     parts.push(code);
-    parts.push('');
+    parts.push("");
   }
 
   // Transpile interfaces
   const interfaceCode = transpileInterfaces(interfaces, context.mappings);
   for (const code of interfaceCode) {
     parts.push(code);
-    parts.push('');
+    parts.push("");
   }
 
   // Transpile discriminated unions
@@ -186,27 +177,27 @@ export function transpileSourceFileWithWarnings(
     const code = transpileDiscriminatedUnion(typeAlias, context.mappings);
     if (code) {
       parts.push(code);
-      parts.push('');
+      parts.push("");
     }
   }
 
   // Transpile each class
   for (const cls of classes) {
     parts.push(transpileClass(cls, context));
-    parts.push('');
+    parts.push("");
   }
 
   // Remove trailing empty line and join
-  while (parts.length > 0 && parts[parts.length - 1] === '') {
+  while (parts.length > 0 && parts[parts.length - 1] === "") {
     parts.pop();
   }
 
-  let code = parts.join('\n');
-  
+  let code = parts.join("\n");
+
   // Wrap in namespace if there's actual content (not just header)
   const hasContent = classes.length > 0 || enums.length > 0 || interfaces.length > 0 || discriminatedUnions.length > 0;
   if (hasContent) {
-    const namespace = context.filePath 
+    const namespace = context.filePath
       ? getNamespaceFromPath(context.filePath, context.rootNamespace)
       : context.rootNamespace;
     code = wrapInNamespace(code, namespace);
@@ -220,13 +211,13 @@ export function transpileSourceFileWithWarnings(
  */
 function checkTopLevelStatements(sourceFile: SourceFile): TranspileWarning[] {
   const warnings: TranspileWarning[] = [];
-  
+
   // Get all statements that are not class, function, interface, enum, or type declarations
   const statements = sourceFile.getStatements();
-  
+
   for (const stmt of statements) {
     const kind = stmt.getKind();
-    
+
     // Skip declarations that are valid at top level
     if (
       kind === SyntaxKind.ClassDeclaration ||
@@ -241,15 +232,15 @@ function checkTopLevelStatements(sourceFile: SourceFile): TranspileWarning[] {
     ) {
       continue;
     }
-    
+
     // Warn about other top-level statements
     const pos = stmt.getStartLineNumber();
     warnings.push({
       message: `Top-level statement skipped. Godot C# scripts must be class-based. Consider moving this code into a class method.`,
-      line: pos,
+      line: pos
     });
   }
-  
+
   return warnings;
 }
 
@@ -257,17 +248,17 @@ function checkTopLevelStatements(sourceFile: SourceFile): TranspileWarning[] {
  * Transpile a single class declaration to C#
  */
 function transpileClass(cls: ClassDeclaration, context: TranspileContext): string {
-  const className = cls.getName() ?? 'UnnamedClass';
+  const className = cls.getName() ?? "UnnamedClass";
   const baseClass = cls.getExtends();
   const isAbstract = cls.isAbstract();
-  
+
   // Build class declaration
-  let declaration = 'public ';
+  let declaration = "public ";
   if (isAbstract) {
-    declaration += 'abstract ';
+    declaration += "abstract ";
   }
   declaration += `partial class ${className}`;
-  
+
   if (baseClass) {
     const baseName = baseClass.getExpression().getText();
     declaration += ` : ${baseName}`;
@@ -282,10 +273,10 @@ function transpileClass(cls: ClassDeclaration, context: TranspileContext): strin
 
   // Transpile constructors (includes parameter property fields)
   const ctorResult = transpileClassConstructors(cls, context.mappings);
-  
+
   // Add parameter property fields (after explicit properties)
   bodyParts.push(...ctorResult.fields);
-  
+
   // Add constructor declarations
   bodyParts.push(...ctorResult.constructors);
 
@@ -302,6 +293,6 @@ function transpileClass(cls: ClassDeclaration, context: TranspileContext): strin
     return `${declaration}\n{\n}`;
   }
 
-  const body = bodyParts.join('\n');
+  const body = bodyParts.join("\n");
   return `${declaration}\n{\n${body}\n}`;
 }

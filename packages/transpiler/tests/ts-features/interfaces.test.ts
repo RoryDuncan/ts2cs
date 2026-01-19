@@ -1,13 +1,13 @@
-import { describe, it } from 'vitest';
-import { expectCSharp, wrapExpected } from '../helpers.js';
+import { describe, it } from "vitest";
+import { expectCSharp, wrapExpected } from "../helpers.js";
 
 /**
  * Tests for TypeScript interface transpilation to C#
  */
 
-describe('Interfaces', () => {
-  describe('Basic interfaces', () => {
-    it('should transpile interface with properties', () => {
+describe("Interfaces", () => {
+  describe("Basic interfaces", () => {
+    it("should transpile interface with properties", () => {
       const input = `interface IPlayer {
   name: string;
   health: number;
@@ -22,7 +22,7 @@ describe('Interfaces', () => {
       expectCSharp(input, expected);
     });
 
-    it('should add I prefix if missing', () => {
+    it("should add I prefix if missing", () => {
       const input = `interface Player {
   name: string;
 }`;
@@ -35,7 +35,7 @@ describe('Interfaces', () => {
       expectCSharp(input, expected);
     });
 
-    it('should transpile interface with methods', () => {
+    it("should transpile interface with methods", () => {
       const input = `interface IEntity {
   getName(): string;
   setHealth(value: number): void;
@@ -51,7 +51,7 @@ describe('Interfaces', () => {
       expectCSharp(input, expected);
     });
 
-    it('should transpile interface with optional properties', () => {
+    it("should transpile interface with optional properties", () => {
       const input = `interface IConfig {
   name: string;
   debug?: boolean;
@@ -67,8 +67,8 @@ describe('Interfaces', () => {
     });
   });
 
-  describe('Interface inheritance', () => {
-    it('should transpile interface extending another interface', () => {
+  describe("Interface inheritance", () => {
+    it("should transpile interface extending another interface", () => {
       const input = `interface IPlayer extends IEntity {
   score: number;
 }`;
@@ -81,7 +81,7 @@ describe('Interfaces', () => {
       expectCSharp(input, expected);
     });
 
-    it('should transpile interface extending interface without I prefix', () => {
+    it("should transpile interface extending interface without I prefix", () => {
       const input = `interface Player extends Entity {
   score: number;
 }`;
@@ -95,8 +95,8 @@ describe('Interfaces', () => {
     });
   });
 
-  describe('Generic interfaces', () => {
-    it('should transpile generic interface', () => {
+  describe("Generic interfaces", () => {
+    it("should transpile generic interface", () => {
       const input = `interface IRepository<T> {
   get(id: string): T;
   save(item: T): void;

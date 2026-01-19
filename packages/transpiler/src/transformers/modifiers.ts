@@ -2,17 +2,17 @@
  * Access modifier transformation utilities
  */
 
-import { 
-  PropertyDeclaration, 
+import {
+  PropertyDeclaration,
   ConstructorDeclaration,
   SyntaxKind,
   GetAccessorDeclaration,
   SetAccessorDeclaration,
   MethodDeclaration,
-  Node,
-} from 'ts-morph';
+  Node
+} from "ts-morph";
 
-export type AccessModifier = 'public' | 'private' | 'protected' | 'internal';
+export type AccessModifier = "public" | "private" | "protected" | "internal";
 
 export interface CSharpModifiers {
   access: AccessModifier;
@@ -24,27 +24,32 @@ export interface CSharpModifiers {
   isAsync: boolean;
 }
 
-type ModifiableNode = PropertyDeclaration | MethodDeclaration | ConstructorDeclaration | GetAccessorDeclaration | SetAccessorDeclaration;
+type ModifiableNode =
+  | PropertyDeclaration
+  | MethodDeclaration
+  | ConstructorDeclaration
+  | GetAccessorDeclaration
+  | SetAccessorDeclaration;
 
 /**
  * Extract C# modifiers from a class member
  */
 export function getModifiers(member: ModifiableNode): CSharpModifiers {
   const modifiers: CSharpModifiers = {
-    access: 'public', // Default in C#
+    access: "public", // Default in C#
     isStatic: false,
     isReadonly: false,
     isAbstract: false,
     isVirtual: false,
     isOverride: false,
-    isAsync: false,
+    isAsync: false
   };
 
   // Check access modifiers
   if (hasModifier(member, SyntaxKind.PrivateKeyword)) {
-    modifiers.access = 'private';
+    modifiers.access = "private";
   } else if (hasModifier(member, SyntaxKind.ProtectedKeyword)) {
-    modifiers.access = 'protected';
+    modifiers.access = "protected";
   }
   // Public is default, no explicit check needed
 
@@ -53,7 +58,7 @@ export function getModifiers(member: ModifiableNode): CSharpModifiers {
   modifiers.isReadonly = hasModifier(member, SyntaxKind.ReadonlyKeyword);
   modifiers.isAbstract = hasModifier(member, SyntaxKind.AbstractKeyword);
   modifiers.isAsync = hasModifier(member, SyntaxKind.AsyncKeyword);
-  
+
   // Note: override is handled separately in method context
   // Virtual and override are typically inferred from class hierarchy
 
@@ -79,25 +84,25 @@ export function formatModifiers(modifiers: CSharpModifiers): string {
 
   // Other modifiers in C# order
   if (modifiers.isStatic) {
-    parts.push('static');
+    parts.push("static");
   }
   if (modifiers.isAbstract) {
-    parts.push('abstract');
+    parts.push("abstract");
   }
   if (modifiers.isVirtual) {
-    parts.push('virtual');
+    parts.push("virtual");
   }
   if (modifiers.isOverride) {
-    parts.push('override');
+    parts.push("override");
   }
   if (modifiers.isAsync) {
-    parts.push('async');
+    parts.push("async");
   }
   if (modifiers.isReadonly) {
-    parts.push('readonly');
+    parts.push("readonly");
   }
 
-  return parts.join(' ');
+  return parts.join(" ");
 }
 
 /**

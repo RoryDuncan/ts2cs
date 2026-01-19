@@ -1,22 +1,22 @@
-import { describe, it } from 'vitest';
-import { expectCSharp, wrapExpected } from '../helpers.js';
+import { describe, it } from "vitest";
+import { expectCSharp, wrapExpected } from "../helpers.js";
 
 /**
  * Tests for TypeScript discriminated union transpilation to C#
- * 
+ *
  * Reference: TypeScript Handbook - Narrowing (Discriminated Unions)
  * https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions
- * 
+ *
  * Strategy: Abstract base class + subclasses pattern
- * 
+ *
  * TypeScript discriminated unions use a common "tag" property (discriminant)
  * to distinguish between union members. In C#, we can represent this using
  * an abstract base class with concrete subclasses for each variant.
  */
 
-describe('Discriminated Unions', () => {
-  describe('Basic discriminated union', () => {
-    it('should transpile simple shape union with kind discriminant', () => {
+describe("Discriminated Unions", () => {
+  describe("Basic discriminated union", () => {
+    it("should transpile simple shape union with kind discriminant", () => {
       const input = `type Shape =
   | { kind: 'circle'; radius: number }
   | { kind: 'square'; size: number };`;
@@ -41,7 +41,7 @@ public partial class Square : Shape
       expectCSharp(input, expected);
     });
 
-    it('should transpile union with type discriminant', () => {
+    it("should transpile union with type discriminant", () => {
       const input = `type Event =
   | { type: 'click'; x: number; y: number }
   | { type: 'keypress'; key: string };`;
@@ -67,7 +67,7 @@ public partial class Keypress : Event
       expectCSharp(input, expected);
     });
 
-    it('should transpile union with status discriminant', () => {
+    it("should transpile union with status discriminant", () => {
       const input = `type Result =
   | { status: 'success'; data: string }
   | { status: 'error'; message: string };`;
@@ -93,8 +93,8 @@ public partial class Error : Result
     });
   });
 
-  describe('Complex discriminated unions', () => {
-    it('should transpile union with multiple properties per variant', () => {
+  describe("Complex discriminated unions", () => {
+    it("should transpile union with multiple properties per variant", () => {
       const input = `type Shape =
   | { kind: 'circle'; radius: number; centerX: number; centerY: number }
   | { kind: 'rectangle'; width: number; height: number; x: number; y: number };`;
@@ -124,7 +124,7 @@ public partial class Rectangle : Shape
       expectCSharp(input, expected);
     });
 
-    it('should transpile union with shared properties', () => {
+    it("should transpile union with shared properties", () => {
       const input = `type Shape =
   | { kind: 'circle'; name: string; radius: number }
   | { kind: 'square'; name: string; size: number };`;
@@ -150,7 +150,7 @@ public partial class Square : Shape
       expectCSharp(input, expected);
     });
 
-    it('should transpile union with more than two variants', () => {
+    it("should transpile union with more than two variants", () => {
       const input = `type Shape =
   | { kind: 'circle'; radius: number }
   | { kind: 'square'; size: number }
@@ -191,14 +191,15 @@ public partial class Rectangle : Shape
       expectCSharp(input, expected);
     });
 
-    it('should transpile discriminated unions with referenced types', () => {
+    it("should transpile discriminated unions with referenced types", () => {
       // DUs with properties referencing other types work because
       // mapTypeName passes through unknown type names
       const input = `type Shape =
   | { kind: 'circle'; center: Point }
   | { kind: 'polygon'; vertices: Point[] };`;
 
-      const expected = wrapExpected(`public abstract partial class Shape
+      const expected = wrapExpected(
+        `public abstract partial class Shape
 {
     public abstract string Kind { get; }
 }
@@ -213,14 +214,16 @@ public partial class Polygon : Shape
 {
     public override string Kind => "polygon";
     public List<Point> vertices;
-}`, ['System.Collections.Generic']);
+}`,
+        ["System.Collections.Generic"]
+      );
 
       expectCSharp(input, expected);
     });
   });
 
-  describe('Discriminant property types', () => {
-    it('should transpile number literal discriminant', () => {
+  describe("Discriminant property types", () => {
+    it("should transpile number literal discriminant", () => {
       const input = `type Message =
   | { code: 1; payload: string }
   | { code: 2; error: string };`;
@@ -245,7 +248,7 @@ public partial class Code2 : Message
       expectCSharp(input, expected);
     });
 
-    it('should transpile boolean literal discriminant', () => {
+    it("should transpile boolean literal discriminant", () => {
       const input = `type Result =
   | { success: true; data: string }
   | { success: false; error: string };`;
@@ -271,8 +274,8 @@ public partial class SuccessFalse : Result
     });
   });
 
-  describe('Using discriminated unions', () => {
-    it.skip('should transpile switch on discriminant (future enhancement)', () => {
+  describe("Using discriminated unions", () => {
+    it.skip("should transpile switch on discriminant (future enhancement)", () => {
       // Future: Convert switch(shape.kind) to C# pattern matching
       // function getArea(shape: Shape): number {
       //   switch (shape.kind) {
@@ -298,7 +301,7 @@ public partial class SuccessFalse : Result
       // Requires control flow analysis and type narrowing
     });
 
-    it.skip('should transpile if-else narrowing (future enhancement)', () => {
+    it.skip("should transpile if-else narrowing (future enhancement)", () => {
       // Future: Convert if-else type narrowing to C# is checks
       // function describe(shape: Shape): string {
       //   if (shape.kind === 'circle') {
@@ -311,7 +314,7 @@ public partial class SuccessFalse : Result
       // Requires control flow analysis
     });
 
-    it.skip('should transpile type guard function (future enhancement)', () => {
+    it.skip("should transpile type guard function (future enhancement)", () => {
       // Future: Convert TypeScript type predicates to C# is expressions
       // function isCircle(shape: Shape): shape is Circle {
       //   return shape.kind === 'circle';
@@ -325,8 +328,8 @@ public partial class SuccessFalse : Result
     });
   });
 
-  describe('Naming conventions', () => {
-    it('should generate PascalCase class names from discriminant values', () => {
+  describe("Naming conventions", () => {
+    it("should generate PascalCase class names from discriminant values", () => {
       const input = `type Event =
   | { kind: 'user-created'; userId: string }
   | { kind: 'HTTP_ERROR'; code: number };`;
@@ -351,7 +354,7 @@ public partial class HttpError : Event
       expectCSharp(input, expected);
     });
 
-    it('should handle reserved C# keywords in discriminant values', () => {
+    it("should handle reserved C# keywords in discriminant values", () => {
       const input = `type Token =
   | { kind: 'class'; name: string }
   | { kind: 'namespace'; path: string };`;
@@ -378,8 +381,8 @@ public partial class Namespace : Token
     });
   });
 
-  describe('Alternative patterns', () => {
-    it('should support enum-based discriminant', () => {
+  describe("Alternative patterns", () => {
+    it("should support enum-based discriminant", () => {
       // Enum member values as discriminants
       const input = `enum ShapeKind { Circle, Square }
 type Shape =
@@ -413,7 +416,7 @@ public partial class Square : Shape
       expectCSharp(input, expected);
     });
 
-    it.skip('should support const enum discriminant (future enhancement)', () => {
+    it.skip("should support const enum discriminant (future enhancement)", () => {
       // Future: Support const enum values as discriminants
       // const enum EventType { Click = 'click', Keypress = 'keypress' }
       //
@@ -421,8 +424,8 @@ public partial class Square : Shape
     });
   });
 
-  describe('Edge cases', () => {
-    it('should handle discriminated union with optional properties', () => {
+  describe("Edge cases", () => {
+    it("should handle discriminated union with optional properties", () => {
       const input = `type Shape =
   | { kind: 'circle'; radius: number; color?: string }
   | { kind: 'square'; size: number; color?: string };`;
@@ -448,12 +451,13 @@ public partial class Square : Shape
       expectCSharp(input, expected);
     });
 
-    it('should handle discriminated union with array properties', () => {
+    it("should handle discriminated union with array properties", () => {
       const input = `type Shape =
   | { kind: 'polygon'; vertices: number[] }
   | { kind: 'path'; size: number };`;
 
-      const expected = wrapExpected(`public abstract partial class Shape
+      const expected = wrapExpected(
+        `public abstract partial class Shape
 {
     public abstract string Kind { get; }
 }
@@ -468,17 +472,19 @@ public partial class Path : Shape
 {
     public override string Kind => "path";
     public float size;
-}`, ['System.Collections.Generic']);
+}`,
+        ["System.Collections.Generic"]
+      );
 
       expectCSharp(input, expected);
     });
 
-    it('should handle single-variant union as regular class', () => {
+    it("should handle single-variant union as regular class", () => {
       // Single variant is not technically a discriminated union
       // It's just a type alias for an object type
       // This should not produce a DU output - it would be treated as a simple class
       const input = `type OnlyCircle = { kind: 'circle'; radius: number };`;
-      
+
       // Single-member unions aren't recognized as DUs (need 2+ variants)
       // So this just outputs the header with no class
       const expected = `// <auto-generated>
@@ -488,10 +494,10 @@ public partial class Path : Shape
       expectCSharp(input, expected);
     });
 
-    it('should skip non-discriminated union and output empty', () => {
+    it("should skip non-discriminated union and output empty", () => {
       // Unions without a common discriminant are skipped
       const input = `type BadUnion = { x: number } | { y: number };`;
-      
+
       // Non-discriminated unions are not transpiled
       const expected = `// <auto-generated>
 //     This file was generated by ts2cs-transpiler. Do not edit manually.

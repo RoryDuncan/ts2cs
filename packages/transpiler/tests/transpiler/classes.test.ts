@@ -1,66 +1,81 @@
-import { describe, it } from 'vitest';
-import { expectCSharp, wrapExpected } from '../helpers.js';
+import { describe, it } from "vitest";
+import { expectCSharp, wrapExpected } from "../helpers.js";
 
-describe('Class Transpilation', () => {
-  describe('Godot class inheritance', () => {
-    it('should transpile class extending Node2D with using Godot', () => {
+describe("Class Transpilation", () => {
+  describe("Godot class inheritance", () => {
+    it("should transpile class extending Node2D with using Godot", () => {
       const input = `class Player extends Node2D {
 }`;
 
-      const expected = wrapExpected(`public partial class Player : Node2D
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
 {
-}`, ['Godot']);
+}`,
+        ["Godot"]
+      );
 
       expectCSharp(input, expected);
     });
 
-    it('should transpile class extending Node with using Godot', () => {
+    it("should transpile class extending Node with using Godot", () => {
       const input = `class GameManager extends Node {
 }`;
 
-      const expected = wrapExpected(`public partial class GameManager : Node
+      const expected = wrapExpected(
+        `public partial class GameManager : Node
 {
-}`, ['Godot']);
+}`,
+        ["Godot"]
+      );
 
       expectCSharp(input, expected);
     });
 
-    it('should transpile class extending CharacterBody2D with using Godot', () => {
+    it("should transpile class extending CharacterBody2D with using Godot", () => {
       const input = `class Enemy extends CharacterBody2D {
 }`;
 
-      const expected = wrapExpected(`public partial class Enemy : CharacterBody2D
+      const expected = wrapExpected(
+        `public partial class Enemy : CharacterBody2D
 {
-}`, ['Godot']);
+}`,
+        ["Godot"]
+      );
 
       expectCSharp(input, expected);
     });
 
-    it('should transpile class extending Control with using Godot', () => {
+    it("should transpile class extending Control with using Godot", () => {
       const input = `class MainMenu extends Control {
 }`;
 
-      const expected = wrapExpected(`public partial class MainMenu : Control
+      const expected = wrapExpected(
+        `public partial class MainMenu : Control
 {
-}`, ['Godot']);
+}`,
+        ["Godot"]
+      );
 
       expectCSharp(input, expected);
     });
 
-    it('should transpile class extending Resource with using Godot', () => {
+    it("should transpile class extending Resource with using Godot", () => {
       const input = `class ItemData extends Resource {
 }`;
 
-      const expected = wrapExpected(`public partial class ItemData : Resource
+      const expected = wrapExpected(
+        `public partial class ItemData : Resource
 {
-}`, ['Godot']);
+}`,
+        ["Godot"]
+      );
 
       expectCSharp(input, expected);
     });
   });
 
-  describe('Non-Godot class inheritance', () => {
-    it('should transpile class extending custom base without using Godot', () => {
+  describe("Non-Godot class inheritance", () => {
+    it("should transpile class extending custom base without using Godot", () => {
       const input = `class Enemy extends BaseEnemy {
 }`;
 
@@ -71,7 +86,7 @@ describe('Class Transpilation', () => {
       expectCSharp(input, expected);
     });
 
-    it('should transpile class extending custom base class', () => {
+    it("should transpile class extending custom base class", () => {
       const input = `class SpecialItem extends Item {
 }`;
 
@@ -83,44 +98,50 @@ describe('Class Transpilation', () => {
     });
   });
 
-  describe('Multiple classes in one file', () => {
-    it('should transpile multiple classes extending Godot types', () => {
+  describe("Multiple classes in one file", () => {
+    it("should transpile multiple classes extending Godot types", () => {
       const input = `class Player extends Node2D {
 }
 
 class Enemy extends CharacterBody2D {
 }`;
 
-      const expected = wrapExpected(`public partial class Player : Node2D
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
 {
 }
 
 public partial class Enemy : CharacterBody2D
 {
-}`, ['Godot']);
+}`,
+        ["Godot"]
+      );
 
       expectCSharp(input, expected);
     });
 
-    it('should add using Godot if any class extends Godot type', () => {
+    it("should add using Godot if any class extends Godot type", () => {
       const input = `class Player extends Node2D {
 }
 
 class HelperClass extends BaseHelper {
 }`;
 
-      const expected = wrapExpected(`public partial class Player : Node2D
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
 {
 }
 
 public partial class HelperClass : BaseHelper
 {
-}`, ['Godot']);
+}`,
+        ["Godot"]
+      );
 
       expectCSharp(input, expected);
     });
 
-    it('should not add using Godot if no class extends Godot type', () => {
+    it("should not add using Godot if no class extends Godot type", () => {
       const input = `class Enemy extends BaseEnemy {
 }
 
@@ -139,8 +160,8 @@ public partial class Item : BaseItem
     });
   });
 
-  describe('Classes without inheritance', () => {
-    it('should transpile class without base class', () => {
+  describe("Classes without inheritance", () => {
+    it("should transpile class without base class", () => {
       const input = `class Utility {
 }`;
 
@@ -151,7 +172,7 @@ public partial class Item : BaseItem
       expectCSharp(input, expected);
     });
 
-    it('should transpile multiple classes without base classes', () => {
+    it("should transpile multiple classes without base classes", () => {
       const input = `class UtilityA {
 }
 

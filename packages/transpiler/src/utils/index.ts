@@ -2,5 +2,4 @@
  * Utility exports
  */
 
-export * from './naming.js';
-
+export * from "./naming.js";
