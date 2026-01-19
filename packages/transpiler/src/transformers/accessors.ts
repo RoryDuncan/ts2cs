@@ -31,7 +31,7 @@ interface CSharpProperty {
 export function transpileClassAccessors(
   classDecl: ClassDeclaration,
   mappings: ResolvedTypeMappings,
-  indent: string = '    '
+  indent = '    '
 ): string[] {
   const getters = classDecl.getGetAccessors();
   const setters = classDecl.getSetAccessors();

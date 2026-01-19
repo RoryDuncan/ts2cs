@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest';
-import { expectCSharp, GENERATED_HEADER } from '../helpers.js';
+import { expectCSharp, wrapExpected } from '../helpers.js';
 
 describe('Class Transpilation', () => {
   describe('Godot class inheritance', () => {
@@ -7,13 +7,9 @@ describe('Class Transpilation', () => {
       const input = `class Player extends Node2D {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -22,13 +18,9 @@ public partial class Player : Node2D
       const input = `class GameManager extends Node {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class GameManager : Node
+      const expected = wrapExpected(`public partial class GameManager : Node
 {
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -37,13 +29,9 @@ public partial class GameManager : Node
       const input = `class Enemy extends CharacterBody2D {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Enemy : CharacterBody2D
+      const expected = wrapExpected(`public partial class Enemy : CharacterBody2D
 {
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -52,13 +40,9 @@ public partial class Enemy : CharacterBody2D
       const input = `class MainMenu extends Control {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class MainMenu : Control
+      const expected = wrapExpected(`public partial class MainMenu : Control
 {
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -67,13 +51,9 @@ public partial class MainMenu : Control
       const input = `class ItemData extends Resource {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class ItemData : Resource
+      const expected = wrapExpected(`public partial class ItemData : Resource
 {
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -84,11 +64,9 @@ public partial class ItemData : Resource
       const input = `class Enemy extends BaseEnemy {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Enemy : BaseEnemy
+      const expected = wrapExpected(`public partial class Enemy : BaseEnemy
 {
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -97,11 +75,9 @@ public partial class Enemy : BaseEnemy
       const input = `class SpecialItem extends Item {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class SpecialItem : Item
+      const expected = wrapExpected(`public partial class SpecialItem : Item
 {
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -115,17 +91,13 @@ public partial class SpecialItem : Item
 class Enemy extends CharacterBody2D {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
 }
 
 public partial class Enemy : CharacterBody2D
 {
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -137,17 +109,13 @@ public partial class Enemy : CharacterBody2D
 class HelperClass extends BaseHelper {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
 }
 
 public partial class HelperClass : BaseHelper
 {
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -159,15 +127,13 @@ public partial class HelperClass : BaseHelper
 class Item extends BaseItem {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Enemy : BaseEnemy
+      const expected = wrapExpected(`public partial class Enemy : BaseEnemy
 {
 }
 
 public partial class Item : BaseItem
 {
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -178,11 +144,9 @@ public partial class Item : BaseItem
       const input = `class Utility {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Utility
+      const expected = wrapExpected(`public partial class Utility
 {
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -194,18 +158,15 @@ public partial class Utility
 class UtilityB {
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class UtilityA
+      const expected = wrapExpected(`public partial class UtilityA
 {
 }
 
 public partial class UtilityB
 {
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
   });
 });
-

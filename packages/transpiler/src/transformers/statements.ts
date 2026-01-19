@@ -30,7 +30,7 @@ import { escapeCSharpKeyword } from '../utils/naming.js';
 export function transpileStatement(
   stmt: Statement,
   mappings: ResolvedTypeMappings,
-  indent: string = '    '
+  indent = '    '
 ): string {
   const kind = stmt.getKind();
 
@@ -432,7 +432,7 @@ function applyBasicTransformations(text: string): string {
 export function transpileStatements(
   statements: Statement[],
   mappings: ResolvedTypeMappings,
-  indent: string = '    '
+  indent = '    '
 ): string {
   return statements.map(stmt => transpileStatement(stmt, mappings, indent)).join('\n');
 }

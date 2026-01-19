@@ -97,7 +97,7 @@ export class Transpiler {
   /**
    * Transpile a single TypeScript source string
    */
-  transpileSource(_source: string, _fileName: string = 'source.ts'): TranspileResult {
+  transpileSource(_source: string, _fileName = 'source.ts'): TranspileResult {
     // TODO: Implement single-file transpilation
     return {
       success: true,

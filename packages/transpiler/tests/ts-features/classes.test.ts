@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { expectCSharp, GENERATED_HEADER } from '../helpers.js';
+import { describe, it } from 'vitest';
+import { expectCSharp, wrapExpected } from '../helpers.js';
 
 /**
  * Tests for TypeScript class feature transpilation to C#
@@ -15,14 +15,10 @@ describe('Class Features', () => {
   health: number;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
     public float health;
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -32,14 +28,10 @@ public partial class Player : Node2D
   health: number = 100;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
     public float health = 100;
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -51,16 +43,12 @@ public partial class Player : Node2D
   isAlive: boolean = true;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
     public float health = 100;
     public string name = "Player";
     public bool isAlive = true;
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -70,12 +58,10 @@ public partial class Player : Node2D
   readonly maxPlayers: number = 4;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Config
+      const expected = wrapExpected(`public partial class Config
 {
     public readonly float maxPlayers = 4;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -85,12 +71,10 @@ public partial class Config
   nickname?: string;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public string? nickname;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -100,12 +84,10 @@ public partial class Player
   private _health: number = 100;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     private float _health = 100;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -115,12 +97,10 @@ public partial class Player
   protected health: number = 100;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     protected float health = 100;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -130,14 +110,10 @@ public partial class Player
   static instance: GameManager;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class GameManager : Node
+      const expected = wrapExpected(`public partial class GameManager : Node
 {
     public static GameManager instance;
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -147,14 +123,10 @@ public partial class GameManager : Node
   items: string[] = [];
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Inventory
+      const expected = wrapExpected(`public partial class Inventory
 {
     public List<string> items = new List<string>();
-}`;
+}`, ['System.Collections.Generic']);
 
       expectCSharp(input, expected);
     });
@@ -164,12 +136,10 @@ public partial class Inventory
   target: Player | null;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public Player? target;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -182,16 +152,12 @@ public partial class Player
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
-    public void Respawn()
+    public void respawn()
     {
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -202,16 +168,12 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
-    public void TakeDamage(float amount)
+    public void takeDamage(float amount)
     {
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -224,18 +186,14 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
     public float health = 100;
-    public float GetHealth()
+    public float getHealth()
     {
         return this.health;
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -246,16 +204,12 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
-    public void Move(float x, float y)
+    public void move(float x, float y)
     {
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -266,16 +220,12 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
-    public void Heal(float amount, string? source = null)
+    public void heal(float amount, string? source = null)
     {
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -286,16 +236,12 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
-    public void Heal(float amount = 10)
+    public void heal(float amount = 10)
     {
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -308,16 +254,12 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
     public Player()
     {
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -330,18 +272,14 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
     public string name;
     public Player(string name)
     {
         this.name = name;
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -352,11 +290,7 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
     public string name;
     private float health;
@@ -365,10 +299,9 @@ public partial class Player : Node2D
         this.name = name;
         this.health = health;
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
-      // }
     });
   });
 
@@ -378,12 +311,10 @@ public partial class Player : Node2D
   health: number = 100;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public float health = 100;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -393,12 +324,10 @@ public partial class Player
   private _health: number = 100;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     private float _health = 100;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -408,20 +337,28 @@ public partial class Player
   protected health: number = 100;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     protected float health = 100;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
 
-    it.todo('should transpile private method', () => {
-      // class Player {
-      //   private calculateDamage(): number { return 0; }
-      // }
+    it('should transpile private method', () => {
+      const input = `class Player {
+  private calculateDamage(): number { return 0; }
+}`;
+
+      const expected = wrapExpected(`public partial class Player
+{
+    private float calculateDamage()
+    {
+        return 0;
+    }
+}`);
+
+      expectCSharp(input, expected);
     });
   });
 
@@ -431,14 +368,10 @@ public partial class Player
   static instance: GameManager;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class GameManager : Node
+      const expected = wrapExpected(`public partial class GameManager : Node
 {
     public static GameManager instance;
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -450,15 +383,13 @@ public partial class GameManager : Node
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class MathUtils
+      const expected = wrapExpected(`public partial class MathUtils
 {
-    public static float Add(float a, float b)
+    public static float add(float a, float b)
     {
         return a + b;
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -473,13 +404,11 @@ public partial class MathUtils
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     private float _health = 100;
     public float health { get => _health; }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -492,13 +421,11 @@ public partial class Player
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     private float _health = 100;
     public float health { set => _health = value; }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -510,9 +437,7 @@ public partial class Player
   set health(value: number) { this._health = value; }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     private float _health = 100;
     public float health
@@ -520,43 +445,85 @@ public partial class Player
         get => _health;
         set => _health = value;
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
   });
 
   describe('Abstract classes', () => {
-    it.todo('should transpile abstract class', () => {
-      // abstract class Entity extends Node2D {
-      //   abstract update(): void;
-      // }
-      // ->
-      // public abstract partial class Entity : Node2D
-      // {
-      //     public abstract void Update();
-      // }
+    it('should transpile abstract class with abstract method', () => {
+      const input = `abstract class Entity extends Node2D {
+  abstract update(): void;
+}`;
+
+      const expected = wrapExpected(`public abstract partial class Entity : Node2D
+{
+    public abstract void update();
+}`, ['Godot']);
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should transpile class extending abstract class', () => {
-      // class Player extends Entity {
-      //   update(): void {
-      //   }
-      // }
+    it('should transpile class extending abstract class', () => {
+      const input = `class Player extends Entity {
+  update(): void {
+  }
+}`;
+
+      const expected = wrapExpected(`public partial class Player : Entity
+{
+    public void update()
+    {
+    }
+}`);
+
+      expectCSharp(input, expected);
     });
   });
 
   describe('Method naming convention', () => {
-    it.todo('should convert camelCase methods to PascalCase', () => {
-      // takeDamage -> TakeDamage
-      // getHealth -> GetHealth
-      // _ready -> _Ready (Godot lifecycle)
+    it('should preserve camelCase method names', () => {
+      const input = `class Player {
+  takeDamage(amount: number): void { }
+  getHealth(): number { return 0; }
+}`;
+
+      const expected = wrapExpected(`public partial class Player
+{
+    public void takeDamage(float amount)
+    {
+    }
+    public float getHealth()
+    {
+        return 0;
+    }
+}`);
+
+      expectCSharp(input, expected);
     });
 
-    it.todo('should preserve Godot lifecycle method names', () => {
-      // _ready -> _Ready
-      // _process -> _Process
-      // _physics_process -> _PhysicsProcess
+    it('should convert Godot lifecycle methods to _PascalCase', () => {
+      const input = `class Player extends Node2D {
+  _ready(): void { }
+  _process(delta: number): void { }
+  _physics_process(delta: number): void { }
+}`;
+
+      const expected = wrapExpected(`public partial class Player : Node2D
+{
+    public void _Ready()
+    {
+    }
+    public void _Process(float delta)
+    {
+    }
+    public void _PhysicsProcess(float delta)
+    {
+    }
+}`, ['Godot']);
+
+      expectCSharp(input, expected);
     });
   });
 });

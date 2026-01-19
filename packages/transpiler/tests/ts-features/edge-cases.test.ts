@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { expectCSharp, expectCSharpWithConfig, GENERATED_HEADER } from '../helpers.js';
+import { describe, it } from 'vitest';
+import { expectCSharp, expectCSharpWithConfig, wrapExpected } from '../helpers.js';
 
 /**
  * Tests for edge cases and potential bugs
@@ -13,16 +13,12 @@ describe('Edge Cases', () => {
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using Godot;
-
-public partial class Player : Node2D
+      const expected = wrapExpected(`public partial class Player : Node2D
 {
-    public void TakeDamage(float @base)
+    public void takeDamage(float @base)
     {
     }
-}`;
+}`, ['Godot']);
 
       expectCSharp(input, expected);
     });
@@ -33,14 +29,12 @@ public partial class Player : Node2D
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Entity
+      const expected = wrapExpected(`public partial class Entity
 {
-    public void SetType(string @event)
+    public void setType(string @event)
     {
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -51,14 +45,12 @@ public partial class Entity
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Utils
+      const expected = wrapExpected(`public partial class Utils
 {
-    public void Process(string @event, float @base, bool @object)
+    public void process(string @event, float @base, bool @object)
     {
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -68,12 +60,10 @@ public partial class Utils
   event: string;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Handler
+      const expected = wrapExpected(`public partial class Handler
 {
     public string @event;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -83,12 +73,10 @@ public partial class Handler
   namespace: string = "default";
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Config
+      const expected = wrapExpected(`public partial class Config
 {
     public string @namespace = "default";
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -99,13 +87,11 @@ public partial class Config
   name: string;
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public float health;
     public string name;
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -117,12 +103,10 @@ public partial class Player
   items: string[] = [];
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Inventory
+      const expected = wrapExpected(`public partial class Inventory
 {
     public string[] items = new string[] { };
-}`;
+}`);
 
       expectCSharpWithConfig(input, expected, { arrayTransform: 'array' });
     });
@@ -132,12 +116,10 @@ public partial class Inventory
   scores: number[] = [];
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Stats
+      const expected = wrapExpected(`public partial class Stats
 {
     public float[] scores = new float[] { };
-}`;
+}`);
 
       expectCSharpWithConfig(input, expected, { arrayTransform: 'array' });
     });
@@ -147,12 +129,10 @@ public partial class Stats
   players: Player[] = [];
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Team
+      const expected = wrapExpected(`public partial class Team
 {
     public Player[] players = new Player[] { };
-}`;
+}`);
 
       expectCSharpWithConfig(input, expected, { arrayTransform: 'array' });
     });
@@ -162,15 +142,12 @@ public partial class Team
   values: number[] = [1, 2, 3];
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Config
+      const expected = wrapExpected(`public partial class Config
 {
     public float[] values = new[] { 1, 2, 3 };
-}`;
+}`);
 
       expectCSharpWithConfig(input, expected, { arrayTransform: 'array' });
     });
   });
 });
-

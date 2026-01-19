@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { transpileSource, GENERATED_HEADER } from '../../src/transpiler.js';
+import { transpileSource } from '../../src/transpiler.js';
+import { wrapExpected, TEST_NAMESPACE } from '../helpers.js';
 
 /**
  * Helper to compare transpiled output
@@ -15,14 +16,10 @@ describe('Array Transform Configuration', () => {
       const input = `class Player {
   scores: number[];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public List<float> scores;
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected);
     });
 
@@ -30,14 +27,10 @@ public partial class Player
       const input = `class Player {
   names: string[];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public List<string> names;
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected);
     });
 
@@ -45,14 +38,10 @@ public partial class Player
       const input = `class Player {
   items: Array<string>;
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public List<string> items;
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected);
     });
 
@@ -60,14 +49,10 @@ public partial class Player
       const input = `class Player {
   scores: number[] = [];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public List<float> scores = new List<float>();
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected);
     });
 
@@ -75,14 +60,10 @@ public partial class Player
       const input = `class Player {
   scores: number[] = [1, 2, 3];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public List<float> scores = new List<float> { 1, 2, 3 };
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected);
     });
   });
@@ -92,12 +73,10 @@ public partial class Player
       const input = `class Player {
   scores: number[];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public float[] scores;
-}`;
+}`);
       expectCSharp(input, expected, { arrayTransform: 'array' });
     });
 
@@ -105,12 +84,10 @@ public partial class Player
       const input = `class Player {
   names: string[];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public string[] names;
-}`;
+}`);
       expectCSharp(input, expected, { arrayTransform: 'array' });
     });
 
@@ -118,12 +95,10 @@ public partial class Player
       const input = `class Player {
   items: Array<string>;
 }`;
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public string[] items;
-}`;
+}`);
       expectCSharp(input, expected, { arrayTransform: 'array' });
     });
 
@@ -131,12 +106,10 @@ public partial class Player
       const input = `class Player {
   scores: number[] = [];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public float[] scores = new float[] { };
-}`;
+}`);
       expectCSharp(input, expected, { arrayTransform: 'array' });
     });
 
@@ -144,12 +117,10 @@ public partial class Player
       const input = `class Player {
   scores: number[] = [1, 2, 3];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public float[] scores = new[] { 1, 2, 3 };
-}`;
+}`);
       expectCSharp(input, expected, { arrayTransform: 'array' });
     });
   });
@@ -159,14 +130,10 @@ public partial class Player
       const input = `class Player {
   scores: number[];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using Godot.Collections;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public Godot.Collections.Array<float> scores;
-}`;
+}`, ['Godot.Collections']);
       expectCSharp(input, expected, { arrayTransform: 'godot-array' });
     });
 
@@ -174,14 +141,10 @@ public partial class Player
       const input = `class Player {
   names: string[];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using Godot.Collections;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public Godot.Collections.Array<string> names;
-}`;
+}`, ['Godot.Collections']);
       expectCSharp(input, expected, { arrayTransform: 'godot-array' });
     });
 
@@ -189,14 +152,10 @@ public partial class Player
       const input = `class Player {
   scores: number[] = [];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using Godot.Collections;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public Godot.Collections.Array<float> scores = new Godot.Collections.Array<float>();
-}`;
+}`, ['Godot.Collections']);
       expectCSharp(input, expected, { arrayTransform: 'godot-array' });
     });
 
@@ -204,14 +163,10 @@ public partial class Player
       const input = `class Player {
   scores: number[] = [1, 2, 3];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using Godot.Collections;
-
-public partial class Player
+      const expected = wrapExpected(`public partial class Player
 {
     public Godot.Collections.Array<float> scores = new Godot.Collections.Array<float> { 1, 2, 3 };
-}`;
+}`, ['Godot.Collections']);
       expectCSharp(input, expected, { arrayTransform: 'godot-array' });
     });
   });
@@ -222,12 +177,10 @@ public partial class Player
         const input = `class Buffer {
   data: Int32Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public int[] data;
-}`;
+}`);
         expectCSharp(input, expected);
       });
 
@@ -235,12 +188,10 @@ public partial class Buffer
         const input = `class Buffer {
   data: Float64Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public double[] data;
-}`;
+}`);
         expectCSharp(input, expected);
       });
 
@@ -248,12 +199,10 @@ public partial class Buffer
         const input = `class Buffer {
   data: Uint8Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public byte[] data;
-}`;
+}`);
         expectCSharp(input, expected);
       });
 
@@ -261,12 +210,10 @@ public partial class Buffer
         const input = `class Buffer {
   data: Float32Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public float[] data;
-}`;
+}`);
         expectCSharp(input, expected);
       });
 
@@ -274,12 +221,10 @@ public partial class Buffer
         const input = `class Buffer {
   data: Int16Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public short[] data;
-}`;
+}`);
         expectCSharp(input, expected);
       });
 
@@ -287,12 +232,10 @@ public partial class Buffer
         const input = `class Buffer {
   data: BigInt64Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public long[] data;
-}`;
+}`);
         expectCSharp(input, expected);
       });
     });
@@ -302,12 +245,10 @@ public partial class Buffer
         const input = `class Buffer {
   data: Int32Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public Span<int> data;
-}`;
+}`);
         expectCSharp(input, expected, { typedArrayTransform: 'span' });
       });
 
@@ -315,12 +256,10 @@ public partial class Buffer
         const input = `class Buffer {
   data: Float64Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public Span<double> data;
-}`;
+}`);
         expectCSharp(input, expected, { typedArrayTransform: 'span' });
       });
 
@@ -328,12 +267,10 @@ public partial class Buffer
         const input = `class Buffer {
   data: Uint8Array;
 }`;
-        const expected = `${GENERATED_HEADER}
-
-public partial class Buffer
+        const expected = wrapExpected(`public partial class Buffer
 {
     public Span<byte> data;
-}`;
+}`);
         expectCSharp(input, expected, { typedArrayTransform: 'span' });
       });
     });
@@ -345,13 +282,11 @@ public partial class Buffer
   values: number[];
   buffer: Int32Array;
 }`;
-      const expected = `${GENERATED_HEADER}
-
-public partial class DataProcessor
+      const expected = wrapExpected(`public partial class DataProcessor
 {
     public float[] values;
     public Span<int> buffer;
-}`;
+}`);
       expectCSharp(input, expected, { 
         arrayTransform: 'array', 
         typedArrayTransform: 'span' 
@@ -363,15 +298,11 @@ public partial class DataProcessor
   values: number[];
   buffer: Int32Array;
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class DataProcessor
+      const expected = wrapExpected(`public partial class DataProcessor
 {
     public List<float> values;
     public int[] buffer;
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected, { 
         arrayTransform: 'list', 
         typedArrayTransform: 'array' 
@@ -386,17 +317,13 @@ public partial class DataProcessor
     return 0;
   }
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Utils
+      const expected = wrapExpected(`public partial class Utils
 {
-    public float Sum(List<float> values)
+    public float sum(List<float> values)
     {
         return 0;
     }
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected);
     });
 
@@ -410,17 +337,13 @@ public partial class Utils
     return ["a", "b"];
   }
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Utils
+      const expected = wrapExpected(`public partial class Utils
 {
-    public List<string> GetItems()
+    public List<string> getItems()
     {
         return new[] { "a", "b" };
     }
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected);
     });
   });
@@ -430,14 +353,10 @@ public partial class Utils
       const input = `class Matrix {
   data: number[][];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Matrix
+      const expected = wrapExpected(`public partial class Matrix
 {
     public List<List<float>> data;
-}`;
+}`, ['System.Collections.Generic']);
       expectCSharp(input, expected);
     });
 
@@ -445,14 +364,11 @@ public partial class Matrix
       const input = `class Matrix {
   data: number[][];
 }`;
-      const expected = `${GENERATED_HEADER}
-
-public partial class Matrix
+      const expected = wrapExpected(`public partial class Matrix
 {
     public float[][] data;
-}`;
+}`);
       expectCSharp(input, expected, { arrayTransform: 'array' });
     });
   });
 });
-

@@ -27,7 +27,7 @@ import { escapeCSharpKeyword } from '../utils/naming.js';
 export function transpileExpression(
   expr: Expression | undefined,
   mappings: ResolvedTypeMappings,
-  indent: string = ''
+  indent = ''
 ): string {
   if (!expr) return '';
 

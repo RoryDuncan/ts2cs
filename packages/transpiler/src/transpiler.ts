@@ -1,6 +1,6 @@
 import { Project, SourceFile, ClassDeclaration, SyntaxKind } from 'ts-morph';
 import { isGodotClass } from './godot/index.js';
-import { TranspilerConfig, getTypeMappings, ResolvedTypeMappings, parseConfig } from './config/schema.js';
+import { TranspilerConfig, getTypeMappings, ResolvedTypeMappings, parseConfig, getNamespace } from './config/schema.js';
 import { transpileClassProperties } from './transformers/properties.js';
 import { transpileClassMethods, transpileClassConstructors } from './transformers/methods.js';
 import { transpileClassAccessors } from './transformers/accessors.js';
@@ -8,6 +8,7 @@ import { transpileEnums } from './transformers/enums.js';
 import { transpileInterfaces } from './transformers/interfaces.js';
 import { transpileDiscriminatedUnion } from './transformers/discriminated-unions.js';
 import { isDiscriminatedUnion } from './transformers/unions.js';
+import { getNamespaceFromPath, wrapInNamespace } from './transformers/namespaces.js';
 
 /**
  * The auto-generated header comment added to all C# files
@@ -47,12 +48,16 @@ const DEFAULT_CONFIG: TranspilerConfig = parseConfig({
 export interface TranspileContext {
   config: TranspilerConfig;
   mappings: ResolvedTypeMappings;
+  /** File path relative to input directory (for namespace derivation) */
+  filePath?: string;
+  /** Resolved root namespace */
+  rootNamespace: string;
 }
 
 /**
  * Create a transpile context from config
  */
-export function createContext(config?: Partial<TranspilerConfig>): TranspileContext {
+export function createContext(config?: Partial<TranspilerConfig>, filePath?: string): TranspileContext {
   const fullConfig = config 
     ? parseConfig({ ...DEFAULT_CONFIG, ...config })
     : DEFAULT_CONFIG;
@@ -60,6 +65,8 @@ export function createContext(config?: Partial<TranspilerConfig>): TranspileCont
   return {
     config: fullConfig,
     mappings: getTypeMappings(fullConfig),
+    filePath,
+    rootNamespace: getNamespace(fullConfig),
   };
 }
 
@@ -68,7 +75,7 @@ export function createContext(config?: Partial<TranspilerConfig>): TranspileCont
  */
 export function transpileSource(
   tsSource: string, 
-  fileName: string = 'source.ts',
+  fileName = 'source.ts',
   config?: Partial<TranspilerConfig>
 ): string {
   const project = new Project({
@@ -81,7 +88,7 @@ export function transpileSource(
   });
 
   const sourceFile = project.createSourceFile(fileName, tsSource);
-  const context = createContext(config);
+  const context = createContext(config, fileName);
   return transpileSourceFile(sourceFile, context);
 }
 
@@ -194,7 +201,18 @@ export function transpileSourceFileWithWarnings(
     parts.pop();
   }
 
-  return { code: parts.join('\n'), warnings };
+  let code = parts.join('\n');
+  
+  // Wrap in namespace if there's actual content (not just header)
+  const hasContent = classes.length > 0 || enums.length > 0 || interfaces.length > 0 || discriminatedUnions.length > 0;
+  if (hasContent) {
+    const namespace = context.filePath 
+      ? getNamespaceFromPath(context.filePath, context.rootNamespace)
+      : context.rootNamespace;
+    code = wrapInNamespace(code, namespace);
+  }
+
+  return { code, warnings };
 }
 
 /**

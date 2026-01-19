@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { expectCSharp, GENERATED_HEADER } from '../helpers.js';
+import { describe, it, expect } from 'vitest';
+import { expectCSharp, wrapExpected } from '../helpers.js';
 import { transpileSourceFileWithWarnings, createContext } from '../../src/transpiler.js';
 import { Project } from 'ts-morph';
 
@@ -16,15 +16,13 @@ describe('Statements', () => {
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Counter
+      const expected = wrapExpected(`public partial class Counter
 {
-    public void Increment()
+    public void increment()
     {
         var x = 5;
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -37,16 +35,14 @@ public partial class Counter
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Counter
+      const expected = wrapExpected(`public partial class Counter
 {
-    public float GetValue()
+    public float getValue()
     {
         var PI = 3.14;
         return PI;
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -59,16 +55,14 @@ public partial class Counter
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Counter
+      const expected = wrapExpected(`public partial class Counter
 {
-    public void Process()
+    public void process()
     {
         float count;
         count = 10;
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -82,15 +76,13 @@ public partial class Counter
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Checker
+      const expected = wrapExpected(`public partial class Checker
 {
-    public bool IsEqual(float a, float b)
+    public bool isEqual(float a, float b)
     {
         return a == b;
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -102,15 +94,13 @@ public partial class Checker
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Checker
+      const expected = wrapExpected(`public partial class Checker
 {
-    public bool IsNotEqual(float a, float b)
+    public bool isNotEqual(float a, float b)
     {
         return a != b;
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -122,15 +112,13 @@ public partial class Checker
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class MathUtils
+      const expected = wrapExpected(`public partial class MathUtils
 {
-    public float Power(float @base, float exp)
+    public float power(float @base, float exp)
     {
         return Mathf.Pow(@base, exp);
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -146,18 +134,16 @@ public partial class MathUtils
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Guard
+      const expected = wrapExpected(`public partial class Guard
 {
-    public void Check(float x)
+    public void check(float x)
     {
         if (x > 0)
         {
             return;
         }
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -173,11 +159,9 @@ public partial class Guard
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Guard
+      const expected = wrapExpected(`public partial class Guard
 {
-    public string Check(float x)
+    public string check(float x)
     {
         if (x > 0)
         {
@@ -188,7 +172,7 @@ public partial class Guard
             return "non-positive";
         }
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -204,18 +188,16 @@ public partial class Guard
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Counter
+      const expected = wrapExpected(`public partial class Counter
 {
-    public void Count()
+    public void count()
     {
         for (var i = 0; i < 10; i++)
         {
             continue;
         }
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -229,20 +211,16 @@ public partial class Counter
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-using System.Collections.Generic;
-
-public partial class Iterator
+      const expected = wrapExpected(`public partial class Iterator
 {
-    public void Process(List<string> items)
+    public void process(List<string> items)
     {
         foreach (var item in items)
         {
             break;
         }
     }
-}`;
+}`, ['System.Collections.Generic']);
 
       expectCSharp(input, expected);
     });
@@ -259,11 +237,9 @@ public partial class Iterator
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Runner
+      const expected = wrapExpected(`public partial class Runner
 {
-    public void Run()
+    public void run()
     {
         var running = true;
         while (running)
@@ -271,7 +247,7 @@ public partial class Runner
             running = false;
         }
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -285,15 +261,13 @@ public partial class Runner
   }
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public partial class Logger
+      const expected = wrapExpected(`public partial class Logger
 {
-    public void Log(string msg)
+    public void log(string msg)
     {
         GD.Print(msg);
     }
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -343,4 +317,3 @@ public partial class Logger
     });
   });
 });
-

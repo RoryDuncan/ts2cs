@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { expectCSharp, GENERATED_HEADER } from '../helpers.js';
+import { describe, it } from 'vitest';
+import { expectCSharp, wrapExpected } from '../helpers.js';
 
 /**
  * Tests for TypeScript enum transpilation to C#
@@ -15,15 +15,13 @@ describe('Enums', () => {
   Right
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public enum Direction
+      const expected = wrapExpected(`public enum Direction
 {
     Up,
     Down,
     Left,
     Right
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -35,14 +33,12 @@ public enum Direction
   Completed = 2
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public enum Status
+      const expected = wrapExpected(`public enum Status
 {
     Pending = 0,
     Active = 1,
     Completed = 2
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
@@ -54,38 +50,55 @@ public enum Status
   High
 }`;
 
-      const expected = `${GENERATED_HEADER}
-
-public enum Priority
+      const expected = wrapExpected(`public enum Priority
 {
     Low,
     Medium = 5,
     High
-}`;
+}`);
 
       expectCSharp(input, expected);
     });
   });
 
   describe('String enums', () => {
-    it.todo('should transpile string enum', () => {
-      // TypeScript string enums don't have a direct C# equivalent
-      // enum Color {
-      //   Red = "RED",
-      //   Blue = "BLUE"
-      // }
-      // Options: 
-      // 1. Generate static class with string constants
-      // 2. Generate enum with [Description] attributes
+    it('should transpile string enum to static class', () => {
+      const input = `enum Color {
+  Red = "RED",
+  Blue = "BLUE",
+  Green = "GREEN"
+}`;
+
+      const expected = wrapExpected(`public static class Color
+{
+    public const string Red = "RED";
+    public const string Blue = "BLUE";
+    public const string Green = "GREEN";
+}`);
+
+      expectCSharp(input, expected);
     });
   });
 
   describe('Const enums', () => {
-    it.todo('should handle const enum', () => {
-      // const enum Direction { Up, Down }
-      // Const enums are inlined at compile time in TS
-      // For C#, we can just generate a regular enum
+    it('should handle const enum as regular enum', () => {
+      const input = `const enum Direction {
+  Up,
+  Down,
+  Left,
+  Right
+}`;
+
+      // Const enums in TS are inlined, but in C# we generate a regular enum
+      const expected = wrapExpected(`public enum Direction
+{
+    Up,
+    Down,
+    Left,
+    Right
+}`);
+
+      expectCSharp(input, expected);
     });
   });
 });
-

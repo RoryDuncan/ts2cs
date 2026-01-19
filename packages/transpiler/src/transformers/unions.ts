@@ -13,7 +13,9 @@ export interface DiscriminatedUnion {
   /** Name of the discriminant property (e.g., 'kind', 'type') */
   discriminantProperty: string;
   /** Type of the discriminant values */
-  discriminantType: 'string' | 'number' | 'boolean';
+  discriminantType: 'string' | 'number' | 'boolean' | 'enum';
+  /** For enum discriminants, the name of the enum type */
+  enumTypeName?: string;
   /** Individual variants of the union */
   variants: UnionVariant[];
   /** Properties shared by all variants (besides discriminant) */
@@ -86,6 +88,10 @@ export function analyzeDiscriminatedUnion(typeAlias: TypeAliasDeclaration): Disc
     return null;
   }
 
+  // Find shared properties first (excluding discriminant)
+  const sharedProperties = findSharedProperties(unionTypes, discriminant.name);
+  const sharedPropNames = new Set(sharedProperties.map(p => p.name));
+
   const variants: UnionVariant[] = [];
   
   for (const memberType of unionTypes) {
@@ -93,28 +99,36 @@ export function analyzeDiscriminatedUnion(typeAlias: TypeAliasDeclaration): Disc
       continue;
     }
 
-    const variant = analyzeVariant(memberType, discriminant.name);
+    // Pass shared property names to exclude them from variant-specific properties
+    const variant = analyzeVariant(memberType, discriminant.name, sharedPropNames);
     if (variant) {
       variants.push(variant);
     }
   }
 
-  // Find shared properties (excluding discriminant)
-  const sharedProperties = findSharedProperties(unionTypes, discriminant.name);
-
   return {
     name,
     discriminantProperty: discriminant.name,
     discriminantType: discriminant.type,
+    enumTypeName: discriminant.enumTypeName,
     variants,
     sharedProperties,
   };
 }
 
 /**
+ * Discriminant property result
+ */
+interface DiscriminantResult {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'enum';
+  enumTypeName?: string;
+}
+
+/**
  * Find the discriminant property in union members
  */
-function findDiscriminantProperty(unionTypes: TypeNode[]): { name: string; type: 'string' | 'number' | 'boolean' } | null {
+function findDiscriminantProperty(unionTypes: TypeNode[]): DiscriminantResult | null {
   // Get properties from first member
   const firstMember = unionTypes[0];
   if (!firstMember?.isKind(SyntaxKind.TypeLiteral)) {
@@ -127,14 +141,22 @@ function findDiscriminantProperty(unionTypes: TypeNode[]): { name: string; type:
     const propName = prop.getName();
     const propType = prop.getTypeNode();
     
-    // Check if this property has a literal type
-    if (!propType?.isKind(SyntaxKind.LiteralType)) {
+    if (!propType) {
+      continue;
+    }
+    
+    // Check if this property has a literal type or type reference (for enum members)
+    const isLiteralType = propType.isKind(SyntaxKind.LiteralType);
+    const isTypeReference = propType.isKind(SyntaxKind.TypeReference);
+    
+    if (!isLiteralType && !isTypeReference) {
       continue;
     }
 
-    // Check if all other members have this property with different literal values
+    // Check if all other members have this property with different values
     let isDiscriminant = true;
-    let discriminantType: 'string' | 'number' | 'boolean' = 'string';
+    let discriminantType: 'string' | 'number' | 'boolean' | 'enum' = 'string';
+    let enumTypeName: string | undefined;
     const seenValues = new Set<string>();
     
     for (const member of unionTypes) {
@@ -150,23 +172,58 @@ function findDiscriminantProperty(unionTypes: TypeNode[]): { name: string; type:
       }
 
       const memberPropType = memberProp.getTypeNode();
-      if (!memberPropType?.isKind(SyntaxKind.LiteralType)) {
+      if (!memberPropType) {
         isDiscriminant = false;
         break;
       }
-
-      const literal = memberPropType.getLiteral();
+      
       let value: string;
       
-      if (literal.isKind(SyntaxKind.StringLiteral)) {
-        value = literal.getLiteralValue();
-        discriminantType = 'string';
-      } else if (literal.isKind(SyntaxKind.NumericLiteral)) {
-        value = String(literal.getLiteralValue());
-        discriminantType = 'number';
-      } else if (literal.isKind(SyntaxKind.TrueKeyword) || literal.isKind(SyntaxKind.FalseKeyword)) {
-        value = literal.getText();
-        discriminantType = 'boolean';
+      // Handle literal types (string, number, boolean)
+      if (memberPropType.isKind(SyntaxKind.LiteralType)) {
+        const literal = memberPropType.getLiteral();
+        
+        if (literal.isKind(SyntaxKind.StringLiteral)) {
+          value = literal.getLiteralValue();
+          discriminantType = 'string';
+        } else if (literal.isKind(SyntaxKind.NumericLiteral)) {
+          value = String(literal.getLiteralValue());
+          discriminantType = 'number';
+        } else if (literal.isKind(SyntaxKind.TrueKeyword) || literal.isKind(SyntaxKind.FalseKeyword)) {
+          value = literal.getText();
+          discriminantType = 'boolean';
+        } else {
+          isDiscriminant = false;
+          break;
+        }
+      }
+      // Handle type references (enum member access like ShapeKind.Circle)
+      else if (memberPropType.isKind(SyntaxKind.TypeReference)) {
+        const typeText = memberPropType.getText();
+        // Check if it's an enum member access (contains a dot)
+        if (typeText.includes('.')) {
+          const parts = typeText.split('.');
+          const currentEnumName = parts[0] ?? '';
+          const memberName = parts[1] ?? '';
+          
+          if (!currentEnumName || !memberName) {
+            isDiscriminant = false;
+            break;
+          }
+          
+          // All enum discriminants must be from the same enum
+          if (enumTypeName && enumTypeName !== currentEnumName) {
+            isDiscriminant = false;
+            break;
+          }
+          
+          enumTypeName = currentEnumName;
+          discriminantType = 'enum';
+          value = memberName;
+        } else {
+          isDiscriminant = false;
+          break;
+        }
       } else {
         isDiscriminant = false;
         break;
@@ -181,7 +238,7 @@ function findDiscriminantProperty(unionTypes: TypeNode[]): { name: string; type:
     }
 
     if (isDiscriminant && seenValues.size === unionTypes.length) {
-      return { name: propName, type: discriminantType };
+      return { name: propName, type: discriminantType, enumTypeName };
     }
   }
 
@@ -190,8 +247,13 @@ function findDiscriminantProperty(unionTypes: TypeNode[]): { name: string; type:
 
 /**
  * Analyze a single variant of a discriminated union
+ * @param sharedPropNames - Names of properties that are shared across all variants (to exclude)
  */
-function analyzeVariant(typeLiteral: TypeLiteralNode, discriminantProp: string): UnionVariant | null {
+function analyzeVariant(
+  typeLiteral: TypeLiteralNode, 
+  discriminantProp: string,
+  sharedPropNames = new Set<string>()
+): UnionVariant | null {
   const properties = typeLiteral.getProperties();
   const discriminantProperty = typeLiteral.getProperty(discriminantProp);
   
@@ -199,36 +261,68 @@ function analyzeVariant(typeLiteral: TypeLiteralNode, discriminantProp: string):
     return null;
   }
 
-  // Get discriminant value
-  const discriminantType = discriminantProperty.getTypeNode();
-  if (!discriminantType?.isKind(SyntaxKind.LiteralType)) {
+  // Get discriminant value - can be a literal or enum member reference
+  const discriminantTypeNode = discriminantProperty.getTypeNode();
+  if (!discriminantTypeNode) {
+    return null;
+  }
+  
+  let discriminantValue: string;
+  let isNumeric = false;
+  let isBoolean = false;
+  let isEnum = false;
+  
+  // Handle literal types (string, number, boolean)
+  if (discriminantTypeNode.isKind(SyntaxKind.LiteralType)) {
+    const literal = discriminantTypeNode.getLiteral();
+    
+    if (literal.isKind(SyntaxKind.StringLiteral)) {
+      discriminantValue = literal.getLiteralValue();
+    } else if (literal.isKind(SyntaxKind.NumericLiteral)) {
+      discriminantValue = String(literal.getLiteralValue());
+      isNumeric = true;
+    } else if (literal.isKind(SyntaxKind.TrueKeyword) || literal.isKind(SyntaxKind.FalseKeyword)) {
+      discriminantValue = literal.getText();
+      isBoolean = true;
+    } else {
+      discriminantValue = literal.getText();
+    }
+  }
+  // Handle type references (enum member access like ShapeKind.Circle)
+  else if (discriminantTypeNode.isKind(SyntaxKind.TypeReference)) {
+    const typeText = discriminantTypeNode.getText();
+    if (typeText.includes('.')) {
+      // Extract enum member name (e.g., "Circle" from "ShapeKind.Circle")
+      const parts = typeText.split('.');
+      const memberName = parts[1];
+      if (!memberName) {
+        return null;
+      }
+      discriminantValue = memberName;
+      isEnum = true;
+    } else {
+      return null;
+    }
+  } else {
     return null;
   }
 
-  const literal = discriminantType.getLiteral();
-  let discriminantValue: string;
-  
-  if (literal.isKind(SyntaxKind.StringLiteral)) {
-    discriminantValue = literal.getLiteralValue();
-  } else if (literal.isKind(SyntaxKind.NumericLiteral)) {
-    discriminantValue = String(literal.getLiteralValue());
-  } else {
-    discriminantValue = literal.getText();
-  }
-
   // Generate class name from discriminant value
-  const className = toClassName(discriminantValue);
+  const className = toClassName(discriminantValue, isNumeric, isBoolean, discriminantProp, isEnum);
 
-  // Get other properties (excluding discriminant)
+  // Get other properties (excluding discriminant and shared properties)
   const variantProperties: PropertyInfo[] = [];
   
   for (const prop of properties) {
-    if (prop.getName() === discriminantProp) {
+    const propName = prop.getName();
+    
+    // Skip discriminant and shared properties
+    if (propName === discriminantProp || sharedPropNames.has(propName)) {
       continue;
     }
 
     variantProperties.push({
-      name: prop.getName(),
+      name: propName,
       typeName: prop.getTypeNode()?.getText() ?? 'object',
       isOptional: prop.hasQuestionToken(),
     });
@@ -302,9 +396,38 @@ function findSharedProperties(unionTypes: TypeNode[], discriminantProp: string):
 
 /**
  * Convert a discriminant value to a class name
+ * @param isNumeric - If true, value is a number and needs special handling
+ * @param isBoolean - If true, value is a boolean (true/false)
+ * @param discriminantProp - The discriminant property name (used for numeric class names)
+ * @param isEnum - If true, value is an enum member name (already PascalCase)
  */
-function toClassName(value: string): string {
-  // Handle various casing styles
+function toClassName(
+  value: string,
+  isNumeric = false,
+  isBoolean = false,
+  discriminantProp = '',
+  isEnum = false
+): string {
+  // For enum discriminants, the value is already the enum member name (typically PascalCase)
+  if (isEnum) {
+    return value;
+  }
+  
+  // For numeric discriminants, prefix with PascalCase property name
+  // e.g., code: 1 -> Code1, code: 200 -> Code200
+  if (isNumeric) {
+    const prefix = toPascalCase(discriminantProp);
+    return `${prefix}${value}`;
+  }
+  
+  // For boolean discriminants, use SuccessTrue/SuccessFalse pattern
+  if (isBoolean) {
+    const prefix = toPascalCase(discriminantProp);
+    const suffix = value === 'true' ? 'True' : 'False';
+    return `${prefix}${suffix}`;
+  }
+  
+  // Handle various casing styles for string values
   return value
     .toLowerCase()
     .replace(/[^a-zA-Z0-9]+/g, ' ')
@@ -312,5 +435,14 @@ function toClassName(value: string): string {
     .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join('');
+}
+
+/**
+ * Convert to PascalCase
+ */
+function toPascalCase(str: string): string {
+  return str
+    .replace(/[-_]+(.)?/g, (_, c: string | undefined) => c?.toUpperCase() ?? '')
+    .replace(/^(.)/, (_, c: string) => c.toUpperCase());
 }
 

@@ -25,7 +25,7 @@ interface ParameterProperty {
 export function transpileMethod(
   method: MethodDeclaration,
   mappings: ResolvedTypeMappings,
-  indent: string = '    '
+  indent = '    '
 ): string {
   const tsName = method.getName();
   const csName = toMethodName(tsName);
@@ -42,7 +42,7 @@ export function transpileMethod(
 
   // Build method signature
   const modifierStr = formatModifiers(modifiers);
-  let signature = `${indent}${modifierStr} ${returnType} ${csName}(${paramList})`;
+  const signature = `${indent}${modifierStr} ${returnType} ${csName}(${paramList})`;
 
   // Handle abstract methods (no body)
   if (modifiers.isAbstract || !body) {
@@ -142,7 +142,7 @@ export function extractParameterProperties(
  */
 export function generateParameterPropertyFields(
   properties: ParameterProperty[],
-  indent: string = '    '
+  indent = '    '
 ): string[] {
   return properties.map(prop => 
     `${indent}${prop.access} ${prop.type} ${prop.escapedName};`
@@ -172,7 +172,7 @@ export function transpileConstructor(
   ctor: ConstructorDeclaration,
   className: string,
   mappings: ResolvedTypeMappings,
-  indent: string = '    ',
+  indent = '    ',
   parameterProperties: ParameterProperty[] = []
 ): string {
   const parameters = ctor.getParameters();
@@ -184,7 +184,7 @@ export function transpileConstructor(
 
   // Build constructor signature
   const modifierStr = modifiers.access;
-  let signature = `${indent}${modifierStr} ${className}(${paramList})`;
+  const signature = `${indent}${modifierStr} ${className}(${paramList})`;
 
   // Generate parameter property assignments
   const propAssignments = generateParameterPropertyAssignments(parameterProperties, indent + '    ');
@@ -246,7 +246,7 @@ function transpileConstructorParameter(
 export function transpileClassMethods(
   classDecl: ClassDeclaration,
   mappings: ResolvedTypeMappings,
-  indent: string = '    '
+  indent = '    '
 ): string[] {
   const methods = classDecl.getMethods();
   return methods.map(method => transpileMethod(method, mappings, indent));
@@ -266,7 +266,7 @@ export interface ConstructorTranspileResult {
 export function transpileClassConstructors(
   classDecl: ClassDeclaration,
   mappings: ResolvedTypeMappings,
-  indent: string = '    '
+  indent = '    '
 ): ConstructorTranspileResult {
   const ctors = classDecl.getConstructors();
   const className = classDecl.getName() ?? 'UnnamedClass';

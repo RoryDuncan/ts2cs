@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Project } from 'ts-morph';
 import { transformType } from '../../src/transformers/types.js';
 import { getTypeMappings, parseConfig } from '../../src/config/schema.js';
-import { expectCSharp, GENERATED_HEADER } from '../helpers.js';
+import { expectCSharp, wrapExpected } from '../helpers.js';
 
 function getDefaultMappings() {
   const config = parseConfig({ inputDir: './src', outputDir: './out' });
@@ -42,18 +42,38 @@ describe('Async/Await Support', () => {
   });
 
   describe('Async methods', () => {
-    it.todo('should transpile async method', () => {
-      // The async modifier handling needs more work
-      // class Player {
-      //   async loadData(): Promise<string> {
-      //     return "data";
-      //   }
-      // }
-      // ->
-      // public async Task<string> LoadData()
-      // {
-      //     return "data";
-      // }
+    it('should transpile async method', () => {
+      const input = `class DataLoader {
+  async loadData(): Promise<string> {
+    return "data";
+  }
+}`;
+
+      const expected = wrapExpected(`public partial class DataLoader
+{
+    public async Task<string> loadData()
+    {
+        return "data";
+    }
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it('should transpile async method with Task (void)', () => {
+      const input = `class DataLoader {
+  async process(): Promise<void> {
+  }
+}`;
+
+      const expected = wrapExpected(`public partial class DataLoader
+{
+    public async Task process()
+    {
+    }
+}`);
+
+      expectCSharp(input, expected);
     });
   });
 });

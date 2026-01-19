@@ -34,18 +34,19 @@ export function toCamelCase(str: string): string {
 /**
  * Convert a TypeScript method name to C# naming convention
  * 
- * - Regular methods: camelCase -> PascalCase
- * - Godot lifecycle methods: _ready -> _Ready, _process -> _Process
+ * - Regular methods: preserve original name (camelCase stays camelCase)
+ * - Godot lifecycle methods: _ready -> _Ready, _process -> _Process (Godot requires this)
  */
 export function toMethodName(tsName: string): string {
-  // Godot lifecycle methods start with underscore
+  // Godot lifecycle methods start with underscore - these need PascalCase after underscore
   if (tsName.startsWith('_')) {
     // _ready -> _Ready, _process -> _Process, _physics_process -> _PhysicsProcess
     const withoutUnderscore = tsName.slice(1);
     return '_' + toPascalCase(withoutUnderscore);
   }
   
-  return toPascalCase(tsName);
+  // Preserve original method name for TypeScript-native feel
+  return tsName;
 }
 
 /**
@@ -54,7 +55,7 @@ export function toMethodName(tsName: string): string {
  * - Public properties: camelCase -> PascalCase (optional, configurable)
  * - Private properties: _name -> _name (preserve underscore prefix)
  */
-export function toPropertyName(tsName: string, isPrivate: boolean = false): string {
+export function toPropertyName(tsName: string, isPrivate = false): string {
   // Private fields with underscore prefix are kept as-is
   if (isPrivate && tsName.startsWith('_')) {
     return tsName;

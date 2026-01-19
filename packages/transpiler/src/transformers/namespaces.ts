@@ -1,82 +1,136 @@
 /**
- * Namespace transformation utilities
+ * Namespace generation utilities for TypeScript to C# transpilation
  */
 
-import { SourceFile } from 'ts-morph';
-import { TranspilerConfig, getNamespace } from '../config/schema.js';
-import { pathToNamespace } from '../utils/naming.js';
+import { toPascalCase } from '../utils/naming.js';
 
 /**
- * Generate the C# namespace for a source file
+ * Derive a C# namespace from a file path relative to the source root
+ * 
+ * Examples:
+ * - 'player.ts' with root 'Game' -> 'Game'
+ * - 'entities/player.ts' with root 'Game' -> 'Game.Entities'
+ * - 'ui/components/button.ts' with root 'Game' -> 'Game.Ui.Components'
  */
-export function generateNamespace(
-  sourceFile: SourceFile,
-  config: TranspilerConfig
+export function getNamespaceFromPath(
+  relativePath: string,
+  rootNamespace: string
 ): string {
-  const rootNamespace = getNamespace(config);
-  const filePath = sourceFile.getFilePath();
+  // Normalize path separators
+  const normalized = relativePath.replace(/\\/g, '/');
   
-  // Get relative path from input directory
-  const relativePath = getRelativePath(filePath, config.inputDir);
+  // Get directory parts (exclude filename)
+  const parts = normalized.split('/').filter(Boolean);
   
-  // Convert path to namespace segments
-  const pathNamespace = pathToNamespace(relativePath);
+  // Remove the filename (last part that has an extension or is the file)
+  if (parts.length > 0) {
+    const lastPart = parts[parts.length - 1] ?? '';
+    if (lastPart.includes('.') || !lastPart.includes('/')) {
+      parts.pop();
+    }
+  }
   
-  if (!pathNamespace) {
+  if (parts.length === 0) {
     return rootNamespace;
   }
   
-  return `${rootNamespace}.${pathNamespace}`;
+  // Convert each directory part to PascalCase and build namespace
+  const namespaceParts = parts.map(part => toPascalCase(part));
+  
+  return `${rootNamespace}.${namespaceParts.join('.')}`;
 }
 
 /**
- * Generate namespace declaration for a C# file
+ * Get the root namespace from config or derive from directory name
  */
-export function generateNamespaceDeclaration(
-  sourceFile: SourceFile,
-  config: TranspilerConfig
-): string {
-  const namespace = generateNamespace(sourceFile, config);
-  
-  // Use file-scoped namespace (C# 10+)
-  return `namespace ${namespace};`;
-}
-
-/**
- * Get relative path from base directory
- */
-function getRelativePath(filePath: string, baseDir: string): string {
-  // Normalize paths
-  const normalizedFile = filePath.replace(/\\/g, '/');
-  const normalizedBase = baseDir.replace(/\\/g, '/').replace(/^\.\//, '');
-  
-  // Find the base directory in the file path
-  const baseIndex = normalizedFile.indexOf(normalizedBase);
-  
-  if (baseIndex === -1) {
-    // Base not found, return just the filename
-    const parts = normalizedFile.split('/');
-    return parts[parts.length - 1] ?? '';
+export function getRootNamespace(configNamespace?: string, inputDir?: string): string {
+  if (configNamespace) {
+    return configNamespace;
   }
   
-  // Get path after base directory
-  const afterBase = normalizedFile.slice(baseIndex + normalizedBase.length);
-  return afterBase.replace(/^\//, '');
+  if (inputDir) {
+    // Get the last part of the input directory and PascalCase it
+    const normalized = inputDir.replace(/\\/g, '/').replace(/\/$/, '');
+    const parts = normalized.split('/').filter(Boolean);
+    const dirName = parts[parts.length - 1];
+    if (dirName) {
+      return toPascalCase(dirName);
+    }
+  }
+  
+  return 'GameScripts';
 }
 
 /**
- * Determine if a namespace declaration should be included
- * (only if there are classes/types to put in it)
+ * Wrap generated C# code in a namespace block
  */
-export function shouldIncludeNamespace(sourceFile: SourceFile): boolean {
-  const classes = sourceFile.getClasses();
-  const interfaces = sourceFile.getInterfaces();
-  const typeAliases = sourceFile.getTypeAliases();
-  const enums = sourceFile.getEnums();
+export function wrapInNamespace(code: string, namespace: string): string {
+  // Split the code into lines
+  const lines = code.split('\n');
   
-  return classes.length > 0 || 
-         interfaces.length > 0 || 
-         typeAliases.length > 0 ||
-         enums.length > 0;
+  // Separate header, usings, and content
+  const headerLines: string[] = [];
+  const usings: string[] = [];
+  const contentLines: string[] = [];
+  
+  let inHeader = true;
+  
+  for (const line of lines) {
+    // Header comments (lines starting with //)
+    if (inHeader && line.startsWith('//')) {
+      headerLines.push(line);
+      continue;
+    }
+    
+    // Empty lines in header
+    if (inHeader && line.trim() === '') {
+      continue;
+    }
+    
+    // Using statements (can appear after header but before content)
+    if (line.startsWith('using ')) {
+      inHeader = false;
+      usings.push(line);
+      continue;
+    }
+    
+    // Skip empty lines between usings and content
+    if (!inHeader && contentLines.length === 0 && line.trim() === '') {
+      continue;
+    }
+    
+    // Content starts here
+    inHeader = false;
+    contentLines.push(line);
+  }
+  
+  // Build result with namespace wrapping
+  const result: string[] = [];
+  
+  // Add header lines
+  result.push(...headerLines);
+  
+  // Add using statements (outside namespace)
+  if (usings.length > 0) {
+    result.push('');
+    result.push(...usings);
+  }
+  
+  // Add namespace block
+  result.push('');
+  result.push(`namespace ${namespace}`);
+  result.push('{');
+  
+  // Add content with indentation
+  for (const line of contentLines) {
+    if (line.trim() === '') {
+      result.push('');
+    } else {
+      result.push(`    ${line}`);
+    }
+  }
+  
+  result.push('}');
+  
+  return result.join('\n');
 }
-

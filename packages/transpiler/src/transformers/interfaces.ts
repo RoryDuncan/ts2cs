@@ -9,7 +9,7 @@ import {
 } from 'ts-morph';
 import { ResolvedTypeMappings } from '../config/schema.js';
 import { transformType } from './types.js';
-import { escapeCSharpKeyword, toPascalCase } from '../utils/naming.js';
+import { escapeCSharpKeyword, toMethodName } from '../utils/naming.js';
 
 /**
  * Transpile an interface declaration to C#
@@ -17,15 +17,35 @@ import { escapeCSharpKeyword, toPascalCase } from '../utils/naming.js';
 export function transpileInterface(
   interfaceDecl: InterfaceDeclaration,
   mappings: ResolvedTypeMappings,
-  indent: string = ''
+  indent = ''
 ): string {
   const name = interfaceDecl.getName();
   
   // Ensure interface name starts with I (C# convention)
   const csName = name.startsWith('I') ? name : `I${name}`;
   
+  // Get type parameters (generics)
+  const typeParams = interfaceDecl.getTypeParameters();
+  const typeParamStr = typeParams.length > 0 
+    ? `<${typeParams.map(tp => tp.getName()).join(', ')}>` 
+    : '';
+  
+  // Get base interfaces (extends clause)
+  const extendsClause = interfaceDecl.getExtends();
+  const baseInterfaces = extendsClause.map(ext => {
+    const baseName = ext.getText();
+    // Ensure base interface also has I prefix
+    return baseName.startsWith('I') ? baseName : `I${baseName}`;
+  });
+  
   const lines: string[] = [];
-  lines.push(`${indent}public interface ${csName}`);
+  
+  // Build interface declaration with inheritance
+  if (baseInterfaces.length > 0) {
+    lines.push(`${indent}public interface ${csName}${typeParamStr} : ${baseInterfaces.join(', ')}`);
+  } else {
+    lines.push(`${indent}public interface ${csName}${typeParamStr}`);
+  }
   lines.push(`${indent}{`);
   
   // Transpile properties
@@ -76,7 +96,8 @@ function transpileInterfaceMethod(
   mappings: ResolvedTypeMappings,
   indent: string
 ): string {
-  const name = toPascalCase(method.getName());
+  // Preserve original method name for TypeScript-native feel
+  const name = toMethodName(method.getName());
   const returnTypeNode = method.getReturnTypeNode();
   const returnType = transformType(returnTypeNode, mappings);
   
@@ -97,7 +118,7 @@ function transpileInterfaceMethod(
 export function transpileInterfaces(
   interfaces: InterfaceDeclaration[],
   mappings: ResolvedTypeMappings,
-  indent: string = ''
+  indent = ''
 ): string[] {
   return interfaces.map(i => transpileInterface(i, mappings, indent));
 }

@@ -2,16 +2,61 @@
  * Enum transformation utilities
  */
 
-import { EnumDeclaration } from 'ts-morph';
+import { EnumDeclaration, SyntaxKind } from 'ts-morph';
 import { ResolvedTypeMappings } from '../config/schema.js';
 
 /**
- * Transpile an enum declaration to C#
+ * Check if an enum is a string enum (all values are strings)
  */
-export function transpileEnum(
+function isStringEnum(enumDecl: EnumDeclaration): boolean {
+  const members = enumDecl.getMembers();
+  
+  if (members.length === 0) {
+    return false;
+  }
+  
+  return members.every(member => {
+    const initializer = member.getInitializer();
+    if (!initializer) {
+      return false;
+    }
+    return initializer.isKind(SyntaxKind.StringLiteral);
+  });
+}
+
+/**
+ * Transpile a string enum to a C# static class with string constants
+ */
+function transpileStringEnum(
   enumDecl: EnumDeclaration,
-  _mappings: ResolvedTypeMappings,
-  indent: string = ''
+  indent: string
+): string {
+  const name = enumDecl.getName();
+  const members = enumDecl.getMembers();
+  
+  const lines: string[] = [];
+  lines.push(`${indent}public static class ${name}`);
+  lines.push(`${indent}{`);
+  
+  for (const member of members) {
+    const memberName = member.getName();
+    const initializer = member.getInitializer();
+    const value = initializer?.getText() ?? `"${memberName}"`;
+    
+    lines.push(`${indent}    public const string ${memberName} = ${value};`);
+  }
+  
+  lines.push(`${indent}}`);
+  
+  return lines.join('\n');
+}
+
+/**
+ * Transpile a numeric enum to C#
+ */
+function transpileNumericEnum(
+  enumDecl: EnumDeclaration,
+  indent: string
 ): string {
   const name = enumDecl.getName();
   const members = enumDecl.getMembers();
@@ -43,12 +88,29 @@ export function transpileEnum(
 }
 
 /**
+ * Transpile an enum declaration to C#
+ */
+export function transpileEnum(
+  enumDecl: EnumDeclaration,
+  _mappings: ResolvedTypeMappings,
+  indent = ''
+): string {
+  // Check if this is a string enum
+  if (isStringEnum(enumDecl)) {
+    return transpileStringEnum(enumDecl, indent);
+  }
+  
+  // Default to numeric enum
+  return transpileNumericEnum(enumDecl, indent);
+}
+
+/**
  * Transpile all enums from a source file
  */
 export function transpileEnums(
   enums: EnumDeclaration[],
   mappings: ResolvedTypeMappings,
-  indent: string = ''
+  indent = ''
 ): string[] {
   return enums.map(e => transpileEnum(e, mappings, indent));
 }
