@@ -77,6 +77,18 @@ export function createContext(config?: Partial<TranspilerConfig>, filePath?: str
  * Transpile a single TypeScript source string to C#
  */
 export function transpileSource(tsSource: string, fileName = "source.ts", config?: Partial<TranspilerConfig>): string {
+  const result = transpileSourceWithWarnings(tsSource, fileName, config);
+  return result.code;
+}
+
+/**
+ * Transpile a single TypeScript source string to C# with full result including warnings
+ */
+export function transpileSourceWithWarnings(
+  tsSource: string,
+  fileName = "source.ts",
+  config?: Partial<TranspilerConfig>
+): TranspileResult {
   const project = new Project({
     useInMemoryFileSystem: true,
     compilerOptions: {
@@ -88,7 +100,7 @@ export function transpileSource(tsSource: string, fileName = "source.ts", config
 
   const sourceFile = project.createSourceFile(fileName, tsSource);
   const context = createContext(config, fileName);
-  return transpileSourceFile(sourceFile, context);
+  return transpileSourceFileWithWarnings(sourceFile, context);
 }
 
 /**

@@ -20,6 +20,7 @@
 // Core transpilation (uses in-memory filesystem)
 export {
   transpileSource,
+  transpileSourceWithWarnings,
   transpileSourceFile,
   transpileSourceFileWithWarnings,
   createContext,

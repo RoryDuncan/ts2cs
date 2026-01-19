@@ -1,0 +1,21 @@
+{
+  "name": "ts2cs-cli-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CLI integration tests for ts2cs-transpiler",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "execa": "^9.5.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "ts2cs-transpiler": "file:../transpiler"
+  }
+}
+
