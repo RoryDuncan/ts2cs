@@ -1,8 +1,17 @@
 <script lang="ts">
+  import "open-props/style";
+  import "open-props/normalize";
+  import "open-props/normalize.dark.min.css";
   import "../app.css";
   import favicon from "$lib/assets/favicon.svg";
 
   let { children } = $props();
+
+  const navLinks = [
+    { href: "/repl", label: "REPL", external: false },
+    { href: "/docs", label: "Docs", external: false },
+    { href: "https://github.com/RoryDuncan/ts2cs-godot", label: "GitHub", external: true }
+  ];
 </script>
 
 <svelte:head>
@@ -16,11 +25,17 @@
     <nav class="container">
       <a href="/" class="logo">ts2cs</a>
       <ul class="nav-links">
-        <li><a href="/repl">REPL</a></li>
-        <li><a href="/docs">Docs</a></li>
-        <li>
-          <a href="https://github.com/user/ts2cs-godot" target="_blank" rel="noopener"> GitHub </a>
-        </li>
+        {#each navLinks as link (link.href)}
+          <li>
+            <a
+              href={link.href}
+              target={link.external ? "_blank" : undefined}
+              rel={link.external ? "noopener" : undefined}
+            >
+              {link.label}
+            </a>
+          </li>
+        {/each}
       </ul>
     </nav>
   </header>
@@ -51,14 +66,13 @@
   }
 
   .logo {
-    font-family: var(--font-mono);
+    font-family: var(--font-brand);
     font-size: var(--font-size-4);
-    font-weight: var(--font-weight-7);
     color: var(--text-1);
   }
 
   .logo:hover {
-    color: var(--accent);
+    color: var(--accent-hover);
     text-decoration: none;
   }
 

@@ -1,81 +1,64 @@
 <script lang="ts">
+  import "$lib/css/panes.css";
   import { PaneGroup, Pane, PaneResizer } from "paneforge";
+  import { enhance } from "$app/forms";
+  import { page } from "$app/stores";
   import CodeEditor from "$lib/components/CodeEditor.svelte";
   import CodeBlock from "$lib/components/CodeBlock.svelte";
+  import { buildShareUrl } from "$lib/share";
+  import { replaceState } from "$app/navigation";
+  import type { RouteId, SubmitFunction } from "./$types";
 
   // Types
-  interface TranspileWarning {
+  type TranspileWarning = {
     message: string;
     line?: number;
     column?: number;
-  }
+  };
+
+  // Props from load function
+  let { data } = $props();
 
   // Constants
   const MAX_INPUT_LENGTH = 50_000;
+  const DEBOUNCE_MS = 750;
 
-  // State
-  let tsInput = $state(`class Player extends Node2D {
-  health: number = 100;
-  private name: string;
-
-  constructor(name: string) {
-    this.name = name;
-  }
-
-  takeDamage(amount: number): void {
-    this.health -= amount;
-  }
-
-  get isAlive(): boolean {
-    return this.health > 0;
-  }
-}`);
-
-  let csOutput = $state("");
+  // State - initialize from server data
+  let tsInput = $state(data.tsInput);
+  let csOutput = $state(data.csOutput);
+  let error = $state<string | null>(data.error);
+  let warnings = $state<TranspileWarning[]>(data.warnings);
   let isTranspiling = $state(false);
-  let error = $state<string | null>(null);
-  let warnings = $state<TranspileWarning[]>([]);
+  let autoTranspile = $state(true);
 
-  // API call handler (business logic lives in the container)
-  async function transpile() {
-    if (!tsInput.trim()) {
-      error = "Please enter some TypeScript code";
-      return;
-    }
+  // Form reference for programmatic submission
+  let formEl: HTMLFormElement;
 
-    isTranspiling = true;
-    error = null;
-    warnings = [];
+  // Debounce timer for auto-transpile
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastInput = tsInput;
 
-    try {
-      const response = await fetch("/api/transpile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tsInput })
-      });
+  // Auto-transpile effect - only track tsInput and autoTranspile
+  $effect(() => {
+    const input = tsInput;
+    const auto = autoTranspile;
 
-      const result = await response.json();
+    // Only trigger if input actually changed
+    if (input !== lastInput) {
+      lastInput = input;
 
-      if (!response.ok) {
-        error = result.error || `Server error: ${response.status}`;
-        csOutput = "";
-        warnings = result.warnings || [];
-      } else if (result.error) {
-        error = result.error;
-        csOutput = "";
-        warnings = result.warnings || [];
-      } else {
-        csOutput = result.output;
-        warnings = result.warnings || [];
+      if (auto && input.trim()) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          formEl?.requestSubmit();
+        }, DEBOUNCE_MS);
       }
-    } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
-      csOutput = "";
-      warnings = [];
-    } finally {
-      isTranspiling = false;
     }
-  }
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  });
 
   // Helper to format warning location
   function formatWarningLocation(warning: TranspileWarning): string {
@@ -86,6 +69,37 @@
     }
     return "";
   }
+
+  const enhancedSubmit: SubmitFunction = () => {
+    isTranspiling = true;
+    error = null;
+
+    if (tsInput === data.defaultCode) {
+      replaceState("/repl", {});
+    } else {
+      const baseUrl: RouteId = "/repl/[[share_code]]";
+      const shareUrl = buildShareUrl(tsInput, baseUrl);
+      replaceState(shareUrl, {});
+    }
+
+    return async ({ result }) => {
+      isTranspiling = false;
+
+      if (result.type === "success" && result.data) {
+        csOutput = result.data.output as string;
+        warnings = (result.data.warnings as TranspileWarning[]) ?? [];
+        error = null;
+      } else if (result.type === "failure" && result.data) {
+        error = (result.data.error as string) || "Transpilation failed";
+        csOutput = "";
+        warnings = (result.data.warnings as TranspileWarning[]) ?? [];
+      } else if (result.type === "error") {
+        error = result.error?.message || "An error occurred";
+        csOutput = "";
+        warnings = [];
+      }
+    };
+  };
 </script>
 
 <svelte:head>
@@ -96,21 +110,30 @@
   <PaneGroup direction="horizontal" class="pane-group">
     <Pane defaultSize={50} minSize={20} class="pane">
       <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">TypeScript</span>
-          <button type="button" class="transpile-btn" disabled={isTranspiling} onclick={transpile}>
-            {isTranspiling ? "..." : "Transpile"}
-          </button>
-        </div>
-        <div class="panel-content">
-          <CodeEditor
-            bind:value={tsInput}
-            lang="typescript"
-            maxlength={MAX_INPUT_LENGTH}
-            placeholder="Enter TypeScript code..."
-            disabled={isTranspiling}
-          />
-        </div>
+        <form method="POST" action="?/transpile" bind:this={formEl} use:enhance={enhancedSubmit}>
+          <div class="panel-header">
+            <span class="panel-title">TypeScript</span>
+            <div class="header-controls">
+              <label class="auto-transpile-label">
+                <input type="checkbox" bind:checked={autoTranspile} />
+                <span>Auto</span>
+              </label>
+              <button type="submit" class="btn btn-primary transpile-btn" disabled={isTranspiling}>
+                {isTranspiling ? "..." : "Transpile"}
+              </button>
+            </div>
+          </div>
+          <div class="panel-content">
+            <input type="hidden" name="tsInput" value={tsInput} />
+            <CodeEditor
+              bind:value={tsInput}
+              lang="typescript"
+              maxlength={MAX_INPUT_LENGTH}
+              placeholder="Enter TypeScript code..."
+              disabled={isTranspiling}
+            />
+          </div>
+        </form>
       </div>
     </Pane>
 
@@ -176,44 +199,6 @@
     overflow: hidden;
   }
 
-  :global(.pane-group) {
-    flex: 1;
-    display: flex;
-  }
-
-  :global(.pane) {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  :global(.resizer) {
-    width: 8px;
-    background: var(--surface-3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: col-resize;
-    transition: background 0.15s ease;
-  }
-
-  :global(.resizer:hover),
-  :global(.resizer[data-dragging="true"]) {
-    background: var(--accent);
-  }
-
-  .resizer-handle {
-    width: 2px;
-    height: 32px;
-    background: var(--surface-4);
-    border-radius: var(--radius-2);
-  }
-
-  :global(.resizer:hover) .resizer-handle,
-  :global(.resizer[data-dragging="true"]) .resizer-handle {
-    background: var(--gray-9);
-  }
-
   .panel {
     flex: 1;
     display: flex;
@@ -222,7 +207,15 @@
     overflow: hidden;
   }
 
+  .panel form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
   .panel-header {
+    height: 3rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -232,7 +225,6 @@
   }
 
   .panel-title {
-    font-family: var(--font-mono);
     font-size: var(--font-size-1);
     font-weight: var(--font-weight-6);
     color: var(--text-2);
@@ -250,17 +242,29 @@
     display: flex;
   }
 
-  .transpile-btn {
-    padding: var(--size-1) var(--size-3);
-    background: var(--accent);
-    color: var(--gray-9);
-    border: none;
-    border-radius: var(--radius-2);
-    font-family: var(--font-mono);
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--size-3);
+  }
+
+  .auto-transpile-label {
+    display: flex;
+    align-items: center;
+    gap: var(--size-1);
     font-size: var(--font-size-0);
-    font-weight: var(--font-weight-6);
+    color: var(--text-3);
     cursor: pointer;
-    transition: background 0.15s ease;
+    user-select: none;
+  }
+
+  .auto-transpile-label input {
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .auto-transpile-label:hover {
+    color: var(--text-2);
   }
 
   .transpile-btn:hover:not(:disabled) {
@@ -270,6 +274,15 @@
   .transpile-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  .share-btn:hover {
+    background: var(--surface-3);
+    color: var(--text-1);
+  }
+
+  .share-btn .material-symbols-outlined {
+    font-size: 18px;
   }
 
   .error-indicator {

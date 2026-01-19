@@ -1,0 +1,37 @@
+.pane-group {
+  flex: 1;
+  display: flex;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.resizer {
+  width: 8px;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  transition: background 0.15s ease;
+}
+
+.resizer:hover,
+.resizer[data-dragging="true"] {
+  background: var(--accent);
+}
+
+.resizer-handle {
+  width: 2px;
+  height: 32px;
+  background: var(--surface-4);
+  border-radius: var(--radius-2);
+}
+
+.resizer:hover .resizer-handle,
+.resizer[data-dragging="true"] .resizer-handle {
+  background: var(--gray-9);
+}
