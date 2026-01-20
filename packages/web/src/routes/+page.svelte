@@ -9,6 +9,7 @@
   <p class="description">Write game logic in TypeScript, transpile to Godot-compatible C#.</p>
 
   <ul class="features-brief">
+    <li class="warning">Early Development</li>
     <li>Godot-ready output</li>
     <li>Full class support</li>
     <li>Type-safe transpilation</li>
@@ -62,6 +63,12 @@
     background: var(--surface-2);
     border-radius: var(--radius-2);
     border: 1px solid var(--border-subtle);
+  }
+
+  .features-brief li.warning {
+    background: rgba(255, 100, 100, 0.15);
+    border-color: rgba(255, 100, 100, 0.4);
+    color: #ff9090;
   }
 
   .cta-buttons {
