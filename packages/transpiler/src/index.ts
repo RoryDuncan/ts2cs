@@ -116,7 +116,8 @@ export class Transpiler {
       compilerOptions: {
         target: 99, // ESNext
         module: 99, // ESNext
-        strict: true
+        strict: true,
+        experimentalDecorators: true
       }
     });
 
@@ -187,7 +188,8 @@ export class Transpiler {
       compilerOptions: {
         target: 99, // ESNext
         module: 99, // ESNext
-        strict: true
+        strict: true,
+        experimentalDecorators: true
       }
     });
 

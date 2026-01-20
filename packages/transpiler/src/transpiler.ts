@@ -1,4 +1,4 @@
-import { Project, SourceFile, ClassDeclaration, SyntaxKind } from "ts-morph";
+import { Project, SourceFile, ClassDeclaration, FunctionDeclaration, SyntaxKind, Block } from "ts-morph";
 import { TranspilerConfig, getTypeMappings, ResolvedTypeMappings, parseConfig, getNamespace } from "./config/schema.js";
 import { transpileClassProperties } from "./transformers/properties.js";
 import { transpileClassMethods, transpileClassConstructors } from "./transformers/methods.js";
@@ -10,6 +10,9 @@ import { isDiscriminatedUnion } from "./transformers/unions.js";
 import { getNamespaceFromPath, wrapInNamespace } from "./transformers/namespaces.js";
 import { analyzeImports } from "./transformers/imports.js";
 import { isGodotClass } from "./godot/classes.js";
+import { transpileStatements } from "./transformers/statements.js";
+import { transformType } from "./transformers/types.js";
+import { escapeCSharpKeyword, toMethodName } from "./utils/naming.js";
 
 /**
  * The project name used in generated output
@@ -95,7 +98,8 @@ export function transpileSourceWithWarnings(
     compilerOptions: {
       target: 99, // ESNext
       module: 99, // ESNext
-      strict: true
+      strict: true,
+      experimentalDecorators: true
     }
   });
 
@@ -127,6 +131,7 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
   const enums = sourceFile.getEnums();
   const interfaces = sourceFile.getInterfaces();
   const typeAliases = sourceFile.getTypeAliases();
+  const functions = sourceFile.getFunctions();
 
   // Analyze imports and populate mappings with imported types for type qualification
   const importAnalysis = analyzeImports(sourceFile, context.config);
@@ -144,7 +149,13 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
   // Find discriminated unions from type aliases
   const discriminatedUnions = typeAliases.filter((ta) => isDiscriminatedUnion(ta));
 
-  if (classes.length === 0 && enums.length === 0 && interfaces.length === 0 && discriminatedUnions.length === 0) {
+  if (
+    classes.length === 0 &&
+    enums.length === 0 &&
+    interfaces.length === 0 &&
+    discriminatedUnions.length === 0 &&
+    functions.length === 0
+  ) {
     // Empty file or no declarations - return header if enabled, otherwise empty
     return { code: context.config.includeHeader ? GENERATED_HEADER : "", warnings };
   }
@@ -192,6 +203,13 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
     parts.push("");
   }
 
+  // Transpile top-level functions as a static class
+  if (functions.length > 0) {
+    const staticClassCode = transpileTopLevelFunctions(functions, context);
+    parts.push(staticClassCode);
+    parts.push("");
+  }
+
   // Transpile discriminated unions
   for (const typeAlias of discriminatedUnions) {
     const code = transpileDiscriminatedUnion(typeAlias, context.mappings);
@@ -215,7 +233,12 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
   let code = parts.join("\n");
 
   // Wrap in namespace if there's actual content (not just header)
-  const hasContent = classes.length > 0 || enums.length > 0 || interfaces.length > 0 || discriminatedUnions.length > 0;
+  const hasContent =
+    classes.length > 0 ||
+    enums.length > 0 ||
+    interfaces.length > 0 ||
+    discriminatedUnions.length > 0 ||
+    functions.length > 0;
   if (hasContent) {
     const namespace = context.filePath
       ? getNamespaceFromPath(context.filePath, context.rootNamespace)
@@ -270,7 +293,9 @@ function checkTopLevelStatements(sourceFile: SourceFile): TranspileWarning[] {
 function transpileClass(cls: ClassDeclaration, context: TranspileContext): string {
   const className = cls.getName() ?? "UnnamedClass";
   const baseClass = cls.getExtends();
+  const implementsClause = cls.getImplements();
   const isAbstract = cls.isAbstract();
+  const typeParams = cls.getTypeParameters();
 
   // Check if extending a Godot class (partial is needed for Godot source generators)
   const baseName = baseClass?.getExpression().getText();
@@ -286,8 +311,41 @@ function transpileClass(cls: ClassDeclaration, context: TranspileContext): strin
   }
   declaration += `class ${className}`;
 
+  // Add type parameters (generics)
+  if (typeParams.length > 0) {
+    const typeParamNames = typeParams.map((tp) => tp.getName());
+    declaration += `<${typeParamNames.join(", ")}>`;
+  }
+
+  // Build inheritance clause (base class and/or interfaces)
+  const inheritanceParts: string[] = [];
+
   if (baseClass) {
-    declaration += ` : ${baseName}`;
+    inheritanceParts.push(baseName!);
+  }
+
+  // Add implemented interfaces with I prefix convention
+  for (const impl of implementsClause) {
+    const interfaceName = impl.getExpression().getText();
+    // Ensure interface name starts with I (C# convention)
+    const csInterfaceName = interfaceName.startsWith("I") ? interfaceName : `I${interfaceName}`;
+    inheritanceParts.push(csInterfaceName);
+  }
+
+  if (inheritanceParts.length > 0) {
+    declaration += ` : ${inheritanceParts.join(", ")}`;
+  }
+
+  // Add generic constraints (where clauses)
+  const constraints: string[] = [];
+  for (const tp of typeParams) {
+    const constraint = tp.getConstraint();
+    if (constraint) {
+      constraints.push(`where ${tp.getName()} : ${constraint.getText()}`);
+    }
+  }
+  if (constraints.length > 0) {
+    declaration += ` ${constraints.join(" ")}`;
   }
 
   // Get class body parts
@@ -321,4 +379,105 @@ function transpileClass(cls: ClassDeclaration, context: TranspileContext): strin
 
   const body = bodyParts.join("\n");
   return `${declaration}\n{\n${body}\n}`;
+}
+
+/**
+ * Transpile top-level functions into a static class
+ */
+function transpileTopLevelFunctions(functions: FunctionDeclaration[], context: TranspileContext): string {
+  // Derive static class name from file path (e.g., "Game.ts" -> "GameFunctions")
+  const baseName = context.filePath
+    ? (context.filePath.replace(/\.[^/.]+$/, "").split(/[/\\]/).pop() ?? "Global")
+    : "Global";
+
+  // Capitalize first letter and add "Functions" suffix
+  const className = baseName.charAt(0).toUpperCase() + baseName.slice(1) + "Functions";
+
+  const lines: string[] = [];
+  lines.push(`public static class ${className}`);
+  lines.push("{");
+
+  for (const func of functions) {
+    const funcCode = transpileTopLevelFunction(func, context);
+    lines.push(funcCode);
+  }
+
+  lines.push("}");
+
+  return lines.join("\n");
+}
+
+/**
+ * Transpile a single top-level function as a static method
+ */
+function transpileTopLevelFunction(func: FunctionDeclaration, context: TranspileContext): string {
+  const tsName = func.getName() ?? "anonymous";
+  const csName = toMethodName(tsName);
+  const returnTypeNode = func.getReturnTypeNode();
+  const parameters = func.getParameters();
+  const body = func.getBody();
+  const typeParams = func.getTypeParameters();
+  const indent = "    ";
+
+  // Get C# return type
+  const returnType = transformType(returnTypeNode, context.mappings);
+
+  // Build parameter list
+  const paramList = parameters
+    .map((p) => {
+      const paramName = escapeCSharpKeyword(p.getName());
+      const paramTypeNode = p.getTypeNode();
+      const isRest = p.isRestParameter();
+      const paramType = transformType(paramTypeNode, context.mappings);
+
+      // Handle rest parameters (params keyword)
+      if (isRest) {
+        // Extract array element type for params
+        const elementType = paramType.replace(/\[\]$/, "").replace(/^List<(.+)>$/, "$1");
+        return `params ${elementType}[] ${paramName}`;
+      }
+
+      return `${paramType} ${paramName}`;
+    })
+    .join(", ");
+
+  // Build type parameters (generics)
+  let typeParamStr = "";
+  if (typeParams.length > 0) {
+    const typeParamNames = typeParams.map((tp) => tp.getName());
+    typeParamStr = `<${typeParamNames.join(", ")}>`;
+  }
+
+  // Build generic constraints
+  let constraintStr = "";
+  for (const tp of typeParams) {
+    const constraint = tp.getConstraint();
+    if (constraint) {
+      constraintStr += ` where ${tp.getName()} : ${constraint.getText()}`;
+    }
+  }
+
+  const signature = `${indent}public static ${returnType} ${csName}${typeParamStr}(${paramList})${constraintStr}`;
+
+  // Handle function without body
+  if (!body) {
+    return `${signature};`;
+  }
+
+  // Transpile function body
+  const bodyContent = transpileMethodBody(body as Block, context.mappings, indent);
+
+  if (!bodyContent.trim()) {
+    return `${signature}\n${indent}{\n${indent}}`;
+  }
+
+  return `${signature}\n${indent}{\n${bodyContent}\n${indent}}`;
+}
+
+/**
+ * Transpile a method body block
+ */
+function transpileMethodBody(body: Block, mappings: ResolvedTypeMappings, indent: string): string {
+  const statements = body.getStatements();
+  return transpileStatements(statements, mappings, indent + "    ");
 }

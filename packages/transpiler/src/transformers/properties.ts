@@ -7,6 +7,7 @@ import { ResolvedTypeMappings } from "../config/schema.js";
 import { transformType } from "./types.js";
 import { getModifiers, formatModifiers } from "./modifiers.js";
 import { escapeCSharpKeyword } from "../utils/naming.js";
+import { transpileDecorators } from "./decorators.js";
 
 /**
  * Transpile a class property to C#
@@ -22,6 +23,7 @@ export function transpileProperty(
   const initializer = property.getInitializer();
   const modifiers = getModifiers(property);
   const isOptional = property.hasQuestionToken();
+  const decorators = property.getDecorators();
 
   // Get C# type
   let csharpType = transformType(typeNode, mappings);
@@ -34,6 +36,12 @@ export function transpileProperty(
   // Build the field declaration
   const modifierStr = formatModifiers(modifiers);
 
+  const lines: string[] = [];
+
+  // Add C# attributes from decorators
+  const attrs = transpileDecorators(decorators, indent);
+  lines.push(...attrs);
+
   let declaration = `${indent}${modifierStr} ${csharpType} ${escapedName}`;
 
   // Add initializer if present
@@ -43,8 +51,9 @@ export function transpileProperty(
   }
 
   declaration += ";";
+  lines.push(declaration);
 
-  return declaration;
+  return lines.join("\n");
 }
 
 /**

@@ -276,6 +276,70 @@ describe("Statements", () => {
     });
   });
 
+  describe("Top-level functions", () => {
+    it("should transpile top-level function to static class method", () => {
+      const input = `function add(a: number, b: number): number {
+  return a + b;
+}`;
+
+      const expected = wrapExpected(`public static class TestFunctions
+{
+    public static float add(float a, float b)
+    {
+        return a + b;
+    }
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile multiple top-level functions", () => {
+      const input = `function add(a: number, b: number): number {
+  return a + b;
+}
+
+function multiply(a: number, b: number): number {
+  return a * b;
+}`;
+
+      const expected = wrapExpected(`public static class TestFunctions
+{
+    public static float add(float a, float b)
+    {
+        return a + b;
+    }
+    public static float multiply(float a, float b)
+    {
+        return a * b;
+    }
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile top-level function alongside classes", () => {
+      const input = `function helper(): void { }
+
+class Player {
+  health: number = 100;
+}`;
+
+      const expected = wrapExpected(`public static class TestFunctions
+{
+    public static void helper()
+    {
+    }
+}
+
+public class Player
+{
+    public float health = 100;
+}`);
+
+      expectCSharp(input, expected);
+    });
+  });
+
   describe("Top-level statement warnings", () => {
     it("should warn about top-level variable declaration", () => {
       const project = new Project({ useInMemoryFileSystem: true });
@@ -317,6 +381,122 @@ describe("Statements", () => {
       const result = transpileSourceFileWithWarnings(sourceFile, context);
 
       expect(result.warnings.length).toBe(0);
+    });
+
+    it("should not warn about function declarations", () => {
+      const project = new Project({ useInMemoryFileSystem: true });
+      const sourceFile = project.createSourceFile("test.ts", `function helper() {}`);
+      const context = createContext();
+
+      const result = transpileSourceFileWithWarnings(sourceFile, context);
+
+      // Should not warn since functions are now transpiled
+      expect(result.warnings.length).toBe(0);
+    });
+  });
+
+  describe("Optional chaining", () => {
+    it("should transpile optional property access", () => {
+      const input = `class Player {
+  target: Player | null;
+  getTargetName(): string | null {
+    return this.target?.name;
+  }
+}`;
+
+      const expected = wrapExpected(`public class Player
+{
+    public Player? target;
+    public string? getTargetName()
+    {
+        return this.target?.name;
+    }
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile chained optional access", () => {
+      const input = `class Game {
+  player: Player | null;
+  getTargetHealth(): number | null {
+    return this.player?.target?.health;
+  }
+}`;
+
+      const expected = wrapExpected(`public class Game
+{
+    public Player? player;
+    public float? getTargetHealth()
+    {
+        return this.player?.target?.health;
+    }
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile optional element access", () => {
+      const input = `class Game {
+  getItem(index: number): string | null {
+    const items: string[] | null = null;
+    return items?.[index];
+  }
+}`;
+
+      const expected = wrapExpected(
+        `public class Game
+{
+    public string? getItem(float index)
+    {
+        List<string>? items = null;
+        return items?[index];
+    }
+}`,
+        ["System.Collections.Generic"]
+      );
+
+      expectCSharp(input, expected);
+    });
+  });
+
+  describe("Nullish coalescing", () => {
+    it("should transpile nullish coalescing operator", () => {
+      const input = `class Player {
+  name: string | null;
+  getDisplayName(): string {
+    return this.name ?? "Unknown";
+  }
+}`;
+
+      const expected = wrapExpected(`public class Player
+{
+    public string? name;
+    public string getDisplayName()
+    {
+        return this.name ?? "Unknown";
+    }
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile nullish coalescing with number", () => {
+      const input = `class Config {
+  getValue(input: number | null): number {
+    return input ?? 0;
+  }
+}`;
+
+      const expected = wrapExpected(`public class Config
+{
+    public float getValue(float? input)
+    {
+        return input ?? 0;
+    }
+}`);
+
+      expectCSharp(input, expected);
     });
   });
 });

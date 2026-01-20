@@ -15,6 +15,7 @@ import { transformType } from "./types.js";
 import { getModifiers, formatModifiers, AccessModifier } from "./modifiers.js";
 import { toMethodName, escapeCSharpKeyword } from "../utils/naming.js";
 import { transpileStatements } from "./statements.js";
+import { transpileDecorators } from "./decorators.js";
 
 /**
  * Represents a parameter property that should generate a field
@@ -36,6 +37,8 @@ export function transpileMethod(method: MethodDeclaration, mappings: ResolvedTyp
   const modifiers = getModifiers(method);
   const parameters = method.getParameters();
   const body = method.getBody();
+  const decorators = method.getDecorators();
+  const typeParams = method.getTypeParameters();
 
   // Get C# return type
   const returnType = transformType(returnTypeNode, mappings);
@@ -43,13 +46,37 @@ export function transpileMethod(method: MethodDeclaration, mappings: ResolvedTyp
   // Build parameter list
   const paramList = parameters.map((p) => transpileParameter(p, mappings)).join(", ");
 
+  // Build type parameters (generics)
+  let typeParamStr = "";
+  if (typeParams.length > 0) {
+    const typeParamNames = typeParams.map((tp) => tp.getName());
+    typeParamStr = `<${typeParamNames.join(", ")}>`;
+  }
+
   // Build method signature
   const modifierStr = formatModifiers(modifiers);
-  const signature = `${indent}${modifierStr} ${returnType} ${csName}(${paramList})`;
+
+  const lines: string[] = [];
+
+  // Add C# attributes from decorators
+  const attrs = transpileDecorators(decorators, indent);
+  lines.push(...attrs);
+
+  // Build generic constraints (where clauses)
+  let constraintStr = "";
+  for (const tp of typeParams) {
+    const constraint = tp.getConstraint();
+    if (constraint) {
+      constraintStr += ` where ${tp.getName()} : ${constraint.getText()}`;
+    }
+  }
+
+  const signature = `${indent}${modifierStr} ${returnType} ${csName}${typeParamStr}(${paramList})${constraintStr}`;
 
   // Handle abstract methods (no body)
   if (modifiers.isAbstract || !body) {
-    return `${signature};`;
+    lines.push(`${signature};`);
+    return lines.join("\n");
   }
 
   // Transpile method body
@@ -57,10 +84,12 @@ export function transpileMethod(method: MethodDeclaration, mappings: ResolvedTyp
 
   // Handle empty body
   if (!bodyContent.trim()) {
-    return `${signature}\n${indent}{\n${indent}}`;
+    lines.push(`${signature}\n${indent}{\n${indent}}`);
+    return lines.join("\n");
   }
 
-  return `${signature}\n${indent}{\n${bodyContent}\n${indent}}`;
+  lines.push(`${signature}\n${indent}{\n${bodyContent}\n${indent}}`);
+  return lines.join("\n");
 }
 
 /**
@@ -72,21 +101,39 @@ export function transpileParameter(param: ParameterDeclaration, mappings: Resolv
   const typeNode = param.getTypeNode();
   const initializer = param.getInitializer();
   const isOptional = param.hasQuestionToken();
+  const isRestParam = param.isRestParameter();
 
   let csharpType = transformType(typeNode, mappings);
 
-  // Make optional parameters nullable
-  if (isOptional && !csharpType.endsWith("?")) {
+  // Make optional parameters nullable (but not rest parameters)
+  if (isOptional && !isRestParam && !csharpType.endsWith("?")) {
     csharpType += "?";
   }
 
-  let result = `${csharpType} ${escapedName}`;
+  // Rest parameters use 'params' keyword in C#
+  // TypeScript: ...args: string[] -> C#: params string[] args
+  let result = "";
+  if (isRestParam) {
+    // For rest parameters, we need to use native array syntax with params
+    // Convert List<T> to T[] for params
+    let arrayType = csharpType;
+    if (csharpType.startsWith("List<") && csharpType.endsWith(">")) {
+      const elementType = csharpType.slice(5, -1);
+      arrayType = `${elementType}[]`;
+    } else if (csharpType.startsWith("Godot.Collections.Array<") && csharpType.endsWith(">")) {
+      const elementType = csharpType.slice(24, -1);
+      arrayType = `${elementType}[]`;
+    }
+    result = `params ${arrayType} ${escapedName}`;
+  } else {
+    result = `${csharpType} ${escapedName}`;
 
-  // Add default value for optional parameters
-  if (isOptional && !initializer) {
-    result += " = null";
-  } else if (initializer) {
-    result += ` = ${transpileInitializerValue(initializer.getText())}`;
+    // Add default value for optional parameters
+    if (isOptional && !initializer) {
+      result += " = null";
+    } else if (initializer) {
+      result += ` = ${transpileInitializerValue(initializer.getText())}`;
+    }
   }
 
   return result;

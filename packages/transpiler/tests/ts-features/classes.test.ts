@@ -577,4 +577,311 @@ describe("Class Features", () => {
       expectCSharp(input, expected);
     });
   });
+
+  describe("Interface implementation", () => {
+    it("should transpile class implementing single interface", () => {
+      const input = `class Player implements IEntity {
+  name: string;
+}`;
+
+      const expected = wrapExpected(`public class Player : IEntity
+{
+    public string name;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile class implementing multiple interfaces", () => {
+      const input = `class Player implements IEntity, IDamageable {
+  health: number;
+}`;
+
+      const expected = wrapExpected(`public class Player : IEntity, IDamageable
+{
+    public float health;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile class extending and implementing", () => {
+      const input = `class Player extends Node2D implements IEntity {
+  name: string;
+}`;
+
+      const expected = wrapExpected(
+        `public partial class Player : Node2D, IEntity
+{
+    public string name;
+}`,
+        ["Godot"]
+      );
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile class extending and implementing multiple interfaces", () => {
+      const input = `class Player extends Node2D implements IEntity, IDamageable {
+  health: number;
+}`;
+
+      const expected = wrapExpected(
+        `public partial class Player : Node2D, IEntity, IDamageable
+{
+    public float health;
+}`,
+        ["Godot"]
+      );
+
+      expectCSharp(input, expected);
+    });
+
+    it("should add I prefix to interfaces without it", () => {
+      const input = `class Player implements Entity {
+  name: string;
+}`;
+
+      const expected = wrapExpected(`public class Player : IEntity
+{
+    public string name;
+}`);
+
+      expectCSharp(input, expected);
+    });
+  });
+
+  describe("Decorators", () => {
+    it("should transpile @Export decorator to [Export] attribute", () => {
+      // Note: Using PascalCase @Export because 'export' is a TS reserved keyword
+      const input = `class Player extends Node2D {
+  @Export
+  health: number = 100;
+}`;
+
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
+{
+    [Export]
+    public float health = 100;
+}`,
+        ["Godot"]
+      );
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile @Onready decorator (skipped - no C# equivalent)", () => {
+      const input = `class Player extends Node2D {
+  @Onready
+  sprite: Sprite2D;
+}`;
+
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
+{
+    public Sprite2D sprite;
+}`,
+        ["Godot"]
+      );
+
+      // Note: @Onready typically generates GetNode calls in _Ready, but for now we just skip it
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile multiple decorators", () => {
+      const input = `class Player extends Node2D {
+  @Export
+  @Rpc
+  health: number = 100;
+}`;
+
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
+{
+    [Export]
+    [Rpc]
+    public float health = 100;
+}`,
+        ["Godot"]
+      );
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile decorator with arguments", () => {
+      const input = `class Player extends Node2D {
+  @ExportRange(0, 100)
+  health: number = 100;
+}`;
+
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
+{
+    [Export(PropertyHint.Range, "0,100")]
+    public float health = 100;
+}`,
+        ["Godot"]
+      );
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile method decorators", () => {
+      const input = `class Player extends Node2D {
+  @Rpc("any_peer", "call_local")
+  syncHealth(): void { }
+}`;
+
+      const expected = wrapExpected(
+        `public partial class Player : Node2D
+{
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
+    public void syncHealth()
+    {
+    }
+}`,
+        ["Godot"]
+      );
+
+      expectCSharp(input, expected);
+    });
+  });
+
+  describe("Generic classes", () => {
+    it("should transpile class with single type parameter", () => {
+      const input = `class Container<T> {
+  value: T;
+}`;
+
+      const expected = wrapExpected(`public class Container<T>
+{
+    public T value;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile class with multiple type parameters", () => {
+      const input = `class Pair<T, U> {
+  first: T;
+  second: U;
+}`;
+
+      const expected = wrapExpected(`public class Pair<T, U>
+{
+    public T first;
+    public U second;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile class with type parameter constraint", () => {
+      const input = `class NodeContainer<T extends Entity> {
+  node: T;
+}`;
+
+      // Note: The constraint type Entity is not a Godot type, so no using Godot needed
+      const expected = wrapExpected(`public class NodeContainer<T> where T : Entity
+{
+    public T node;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile class with multiple constraints", () => {
+      const input = `class Container<T extends Entity, U extends Component> {
+  node: T;
+  resource: U;
+}`;
+
+      const expected = wrapExpected(`public class Container<T, U> where T : Entity where U : Component
+{
+    public T node;
+    public U resource;
+}`);
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile generic method in class", () => {
+      const input = `class Utils {
+  getFirst<T>(items: T[]): T {
+    return items[0];
+  }
+}`;
+
+      const expected = wrapExpected(
+        `public class Utils
+{
+    public T getFirst<T>(List<T> items)
+    {
+        return items[0];
+    }
+}`,
+        ["System.Collections.Generic"]
+      );
+
+      expectCSharp(input, expected);
+    });
+  });
+
+  describe("Rest parameters", () => {
+    it("should transpile rest parameter to params array", () => {
+      const input = `class Logger {
+  log(...messages: string[]): void { }
+}`;
+
+      const expected = wrapExpected(
+        `public class Logger
+{
+    public void log(params string[] messages)
+    {
+    }
+}`,
+        ["System.Collections.Generic"]
+      );
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile rest parameter with number type", () => {
+      const input = `class Calculator {
+  sum(...numbers: number[]): number { return 0; }
+}`;
+
+      const expected = wrapExpected(
+        `public class Calculator
+{
+    public float sum(params float[] numbers)
+    {
+        return 0;
+    }
+}`,
+        ["System.Collections.Generic"]
+      );
+
+      expectCSharp(input, expected);
+    });
+
+    it("should transpile rest parameter after regular parameters", () => {
+      const input = `class Logger {
+  log(prefix: string, ...messages: string[]): void { }
+}`;
+
+      const expected = wrapExpected(
+        `public class Logger
+{
+    public void log(string prefix, params string[] messages)
+    {
+    }
+}`,
+        ["System.Collections.Generic"]
+      );
+
+      expectCSharp(input, expected);
+    });
+  });
 });
