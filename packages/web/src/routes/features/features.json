@@ -6,6 +6,41 @@
       "category": "Arrays"
     },
     {
+      "feature": "Class implements interface",
+      "repl": "N4Igxg9gJgpiBcICWA7ALjATgMwIZhgAIBJAWQgDdcAjAGyOAB0VDCBbSmACgA95CUAVzbUsAGkIBPfkJFYAlPwoQkUANzMAvs2ZhauAM4HCABX2SshJGwAO9NjHTGylGvUJMWhPgOGjMhAC8hAAMGl7SvnIBwWHMrPHsnLwyfuJSqdGKhMqqHomsaAAWSAYAdDxB3uGshSXlklWSNYTaKJogmkA",
+      "category": "Classes"
+    },
+    {
+      "feature": "Rest parameters (params)",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAGQgczxgCdNgAdAO00yXwAoA6JgWxgxULXkzQBciAlhTwBtALoBKbgDcIAqKUrVqAehU18WFEiSZW7TkswBfSsZDGgA",
+      "category": "Classes"
+    },
+    {
+      "feature": "Top-level function to static class",
+      "repl": "N4Igxg9gJgpiBcIBmBXAdmALgSwmgBAIZRQAUh8+aKAtgEYwBOANPnZdfUwJQe0ON8wADoF8jGJhSMChfAGo2AblEBfUaNQYcefDRQAbHAAcDAT3J8uLNlYG8q-JkNH5xk6bPwAqZWpCqQA",
+      "category": "Functions"
+    },
+    {
+      "feature": "Generic class",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQgOwBcUBLPGAJwB4AVAPk2AB09NMA3FJAVxnk2oDczVsMwBzGAQBqnHgAoAlH2oNRrcpK7kWBABbE0AOg7cYQlpgC+zSyEtA",
+      "category": "Generics"
+    },
+    {
+      "feature": "Generic class with constraint",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAOWjAwhAHYAuKAlkTAE4A8AKpjAB4kxFRYCip5JEngD5MwADpFMmInniZ6AbnGSlmAOYwSuWAAoAlLMZiJkzNQ0BXahJIALcmgB002IuMBfcW5BugA",
+      "category": "Generics"
+    },
+    {
+      "feature": "Generic method",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAVQC4EsktgAdAO00wHMZcAxfAJzVwB4AVAPgAp9cYAtmniZ2AbQC6AShHtMpCpUyNaAV0YU+gtGIAMEgNzlKAX3ImQJoA",
+      "category": "Generics"
+    },
+    {
+      "feature": "@Export decorator",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdMYAPAFxgDsosA5aGAJgBFNgAdKzTAAQFFSABwiFyXHgAsYKJOUnxMVAK4BbAEZFMAXkwBGAAwGA3BMxmBw0eO6Y0QmDCiKVGrbqZHTVAL4gfQA",
+      "category": "Godot"
+    },
+    {
       "feature": "String[] to List<string>",
       "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdNgAdAO003JQFsY15M0AXQgS3IHMBtAXQDcFAL4hhQA",
       "category": "Arrays"
