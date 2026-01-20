@@ -58,6 +58,9 @@
         <ul class="feature-list">
           {#each featuresByCategory[category] as feature}
             <li>
+              <a href="/repl/{feature.repl}" class="feature-link-mobile">
+                {feature.feature}
+              </a>
               <button
                 type="button"
                 class="feature-button"
@@ -66,7 +69,7 @@
               >
                 {feature.feature}
               </button>
-              <a href="/repl/{feature.repl}" class="feature-link" aria-label="Open {feature.feature} in REPL"> ↗ </a>
+              <a href="/repl/{feature.repl}" class="feature-link-desktop" aria-label="Open in REPL"> ↗ </a>
             </li>
           {/each}
         </ul>
@@ -92,8 +95,8 @@
 
   .features-container {
     padding: var(--size-6);
-    max-width: 500px;
     overflow-y: auto;
+    flex: 1;
   }
 
   .features-container h1 {
@@ -142,16 +145,18 @@
     gap: 0;
   }
 
-  /* Mobile: show as simple links */
+  /* Mobile: show feature names as links */
   .feature-button {
     display: none;
   }
 
-  .feature-link {
+  .feature-link-desktop {
+    display: none;
+  }
+
+  .feature-link-mobile {
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: block;
     padding: var(--size-2) var(--size-3);
     background: var(--surface-2);
     border-radius: var(--radius-2);
@@ -160,7 +165,7 @@
     font-size: var(--font-size-0);
   }
 
-  .feature-link:hover {
+  .feature-link-mobile:hover {
     background: var(--surface-3);
     text-decoration: none;
   }
@@ -177,7 +182,9 @@
     }
 
     .features-container {
-      flex-shrink: 0;
+      flex: 0 0 auto;
+      max-width: 500px;
+      max-height: calc(100vh - 4rem);
       border-right: 1px solid var(--border-subtle);
     }
 
@@ -193,7 +200,11 @@
       gap: var(--size-1);
     }
 
-    /* Desktop: show buttons for selection */
+    /* Desktop: hide mobile link, show buttons */
+    .feature-link-mobile {
+      display: none;
+    }
+
     .feature-button {
       display: block;
       flex: 1;
@@ -220,11 +231,21 @@
       border-color: var(--accent);
     }
 
-    .feature-link {
-      flex: 0;
+    .feature-link-desktop {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: var(--size-2);
+      background: var(--surface-2);
       border-radius: var(--radius-2);
+      color: var(--text-1);
       font-size: var(--font-size-1);
+      transition: background 0.15s ease;
+    }
+
+    .feature-link-desktop:hover {
+      background: var(--surface-3);
+      text-decoration: none;
     }
 
     .preview-panel {
