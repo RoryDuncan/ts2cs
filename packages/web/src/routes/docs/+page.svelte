@@ -13,7 +13,7 @@
     <p><strong>TODO:</strong> Documentation is coming soon.</p>
     <p>
       In the meantime, check out the <a href="/repl">REPL</a> to try the transpiler, or view the source on
-      <a href="https://github.com/user/ts2cs-godot" target="_blank" rel="noopener">GitHub</a>.
+      <a href="https://github.com/user/ts2cs" target="_blank" rel="noopener">GitHub</a>.
     </p>
   </div>
 </div>

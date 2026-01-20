@@ -14,7 +14,7 @@ let highlighterPromise: Promise<Highlighter> | null = null;
 const THEME = "github-dark";
 
 // Languages we support
-const LANGUAGES = ["typescript", "csharp"] as const;
+const LANGUAGES = ["typescript", "csharp", "json"] as const;
 export type SupportedLanguage = (typeof LANGUAGES)[number];
 
 /**

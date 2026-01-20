@@ -10,7 +10,7 @@
   const navLinks = [
     { href: "/repl", label: "REPL", external: false },
     { href: "/docs", label: "Docs", external: false },
-    { href: "https://github.com/RoryDuncan/ts2cs-godot", label: "GitHub", external: true }
+    { href: "https://github.com/RoryDuncan/ts2cs", label: "GitHub", external: true }
   ];
 </script>
 

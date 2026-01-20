@@ -20,7 +20,8 @@
   import { EditorView, keymap, placeholder as cmPlaceholder, lineNumbers } from "@codemirror/view";
   import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
   import { javascript } from "@codemirror/lang-javascript";
-  import { oneDark } from "@codemirror/theme-one-dark";
+  import { csharp } from "@replit/codemirror-lang-csharp";
+  import { coolGlow as currentTheme } from "thememirror";
   import type { SupportedLanguage } from "$lib/highlight";
 
   interface Props {
@@ -58,7 +59,7 @@
       lineNumbers(),
       history(),
       keymap.of([...defaultKeymap, ...historyKeymap]),
-      oneDark,
+      currentTheme,
       EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
         if (update.docChanged && !isInternalUpdate) {
@@ -77,10 +78,15 @@
       extensions.push(cmPlaceholder(placeholder));
     }
 
-    // Add language support - TypeScript mode works for both TS input
-    // Note: CodeMirror doesn't have a built-in C# mode, but we only edit TS
+    // Add language support - TypeScript mode works for TS input
+    // JSON mode uses JavaScript without TypeScript flag
+    // Note: CodeMirror doesn't have a built-in C# mode, but we only edit TS/JSON
     if (lang === "typescript") {
       extensions.push(javascript({ typescript: true }));
+    } else if (lang === "json") {
+      extensions.push(javascript());
+    } else if (lang === "csharp") {
+      extensions.push(csharp());
     }
 
     // Enforce max length

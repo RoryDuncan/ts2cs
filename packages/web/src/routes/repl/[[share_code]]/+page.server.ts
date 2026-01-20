@@ -1,5 +1,5 @@
 import { fail } from "@sveltejs/kit";
-import { decodeCode } from "$lib/share";
+import { decodeShareData, DEFAULT_CONFIG, jsonToConfig, type ShareableConfig } from "$lib/share";
 import { transpileSourceWithWarnings } from "ts2cs-transpiler";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -23,7 +23,7 @@ const DEFAULT_CODE = `class Player extends Node2D {
   }
 }`;
 
-const defaultTranspiled = transpileCode(DEFAULT_CODE);
+const defaultTranspiled = transpileCode(DEFAULT_CODE, DEFAULT_CONFIG);
 
 type TranspileWarning = {
   message: string;
@@ -36,19 +36,38 @@ type TranspileResultData = {
   output: string;
   warnings: TranspileWarning[];
   error: string | null;
+  config: ShareableConfig;
 };
 
 /**
- * Transpile TypeScript code to C#
+ * Convert ShareableConfig to transpiler config format
  */
-function transpileCode(input: string): TranspileResultData {
-  const result = transpileSourceWithWarnings(input);
+function toTranspilerConfig(config: ShareableConfig) {
+  return {
+    inputDir: ".",
+    outputDir: ".",
+    namespace: config.namespace,
+    numberType: config.numberType,
+    arrayTransform: config.arrayTransform,
+    typedArrayTransform: config.typedArrayTransform,
+    discriminatedUnionStrategy: config.discriminatedUnionStrategy,
+    includeHeader: config.includeHeader
+  };
+}
+
+/**
+ * Transpile TypeScript code to C# with optional config
+ */
+function transpileCode(input: string, config: ShareableConfig): TranspileResultData {
+  const transpilerConfig = toTranspilerConfig(config);
+  const result = transpileSourceWithWarnings(input, "source.ts", transpilerConfig);
 
   return {
     input,
     output: result.code,
     warnings: result.warnings,
-    error: null
+    error: null,
+    config
   };
 }
 
@@ -59,16 +78,18 @@ export const load: PageServerLoad = async ({ params }) => {
   // Transpile the initial code
   let vm: TranspileResultData | undefined = undefined;
   if (typeof share_code !== "undefined") {
-    const decoded = decodeCode(share_code);
-    if (decoded) {
+    const shareData = decodeShareData(share_code);
+    if (shareData) {
       try {
-        vm = transpileCode(decoded);
+        const config = { ...DEFAULT_CONFIG, ...shareData.config };
+        vm = transpileCode(shareData.code, config);
       } catch (err) {
         vm = {
           input: "// Invalid share code",
           output: "",
           warnings: [],
-          error: err instanceof Error ? err.message : String(err)
+          error: err instanceof Error ? err.message : String(err),
+          config: DEFAULT_CONFIG
         };
       }
     }
@@ -82,10 +103,12 @@ export const load: PageServerLoad = async ({ params }) => {
 
   return {
     defaultCode: DEFAULT_CODE,
+    defaultConfig: DEFAULT_CONFIG,
     tsInput: vm.input,
     csOutput: vm.output,
     warnings: vm.warnings,
-    error: vm.error
+    error: vm.error,
+    config: vm.config
   };
 };
 
@@ -93,6 +116,7 @@ export const actions = {
   transpile: async ({ request }) => {
     const formData = await request.formData();
     const tsInput = formData.get("tsInput");
+    const configJson = formData.get("config");
 
     // Validate input
     if (!tsInput || typeof tsInput !== "string") {
@@ -111,8 +135,22 @@ export const actions = {
       return fail(400, { error: "Input is empty", output: "", warnings: [] });
     }
 
+    // Parse config
+    let config = DEFAULT_CONFIG;
+    if (configJson && typeof configJson === "string") {
+      const parsedConfig = jsonToConfig(configJson);
+      if (parsedConfig === null) {
+        return fail(400, {
+          error: "Invalid configuration JSON. Please check the syntax.",
+          output: "",
+          warnings: []
+        });
+      }
+      config = { ...DEFAULT_CONFIG, ...parsedConfig };
+    }
+
     try {
-      const result = transpileCode(tsInput);
+      const result = transpileCode(tsInput, config);
 
       return {
         success: true,
