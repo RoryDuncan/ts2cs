@@ -11,7 +11,8 @@ import {
   SyntaxKind
 } from "ts-morph";
 import { ResolvedTypeMappings } from "../config/schema.js";
-import { transformType } from "./types.js";
+import { TranspileContext, addInferenceWarning } from "../transpiler.js";
+import { transformType, inferMethodReturnType } from "./types.js";
 import { getModifiers, formatModifiers, AccessModifier } from "./modifiers.js";
 import { toMethodName, escapeCSharpKeyword } from "../utils/naming.js";
 import { transpileStatements } from "./statements.js";
@@ -30,7 +31,12 @@ interface ParameterProperty {
 /**
  * Transpile a class method to C#
  */
-export function transpileMethod(method: MethodDeclaration, mappings: ResolvedTypeMappings, indent = "    "): string {
+export function transpileMethod(
+  method: MethodDeclaration,
+  context: TranspileContext,
+  indent = "    "
+): string {
+  const mappings = context.mappings;
   const tsName = method.getName();
   const csName = toMethodName(tsName);
   const returnTypeNode = method.getReturnTypeNode();
@@ -40,8 +46,17 @@ export function transpileMethod(method: MethodDeclaration, mappings: ResolvedTyp
   const decorators = method.getDecorators();
   const typeParams = method.getTypeParameters();
 
-  // Get C# return type
-  const returnType = transformType(returnTypeNode, mappings);
+  // Get C# return type - use explicit type if available, otherwise infer from return type
+  let returnType: string;
+  if (returnTypeNode) {
+    returnType = transformType(returnTypeNode, mappings);
+  } else {
+    // Use TypeScript's type inference
+    const inferredType = method.getReturnType();
+    returnType = inferMethodReturnType(inferredType, modifiers.isAsync, mappings);
+    // Add warning about inferred return type
+    addInferenceWarning(context, "method", tsName, returnType, method.getStartLineNumber());
+  }
 
   // Build parameter list
   const paramList = parameters.map((p) => transpileParameter(p, mappings)).join(", ");
@@ -79,8 +94,8 @@ export function transpileMethod(method: MethodDeclaration, mappings: ResolvedTyp
     return lines.join("\n");
   }
 
-  // Transpile method body
-  const bodyContent = transpileMethodBodyBlock(body as Block, mappings, indent);
+  // Transpile method body (pass context for warnings)
+  const bodyContent = transpileMethodBodyBlock(body as Block, mappings, indent, context);
 
   // Handle empty body
   if (!bodyContent.trim()) {
@@ -277,11 +292,11 @@ function transpileConstructorParameter(param: ParameterDeclaration, mappings: Re
  */
 export function transpileClassMethods(
   classDecl: ClassDeclaration,
-  mappings: ResolvedTypeMappings,
+  context: TranspileContext,
   indent = "    "
 ): string[] {
   const methods = classDecl.getMethods();
-  return methods.map((method) => transpileMethod(method, mappings, indent));
+  return methods.map((method) => transpileMethod(method, context, indent));
 }
 
 /**
@@ -297,9 +312,10 @@ export interface ConstructorTranspileResult {
  */
 export function transpileClassConstructors(
   classDecl: ClassDeclaration,
-  mappings: ResolvedTypeMappings,
+  context: TranspileContext,
   indent = "    "
 ): ConstructorTranspileResult {
+  const mappings = context.mappings;
   const ctors = classDecl.getConstructors();
   const className = classDecl.getName() ?? "UnnamedClass";
 
@@ -325,14 +341,19 @@ export function transpileClassConstructors(
 /**
  * Transpile a method body block using the statement transpiler
  */
-function transpileMethodBodyBlock(block: Block, mappings: ResolvedTypeMappings, indent: string): string {
+function transpileMethodBodyBlock(
+  block: Block,
+  mappings: ResolvedTypeMappings,
+  indent: string,
+  context?: TranspileContext
+): string {
   const statements = block.getStatements();
 
   if (statements.length === 0) {
     return "";
   }
 
-  return transpileStatements(statements, mappings, indent + "    ");
+  return transpileStatements(statements, mappings, indent + "    ", context);
 }
 
 /**

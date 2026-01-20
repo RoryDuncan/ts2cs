@@ -4,7 +4,8 @@
 
 import { PropertyDeclaration, ClassDeclaration } from "ts-morph";
 import { ResolvedTypeMappings } from "../config/schema.js";
-import { transformType } from "./types.js";
+import { TranspileContext, addInferenceWarning } from "../transpiler.js";
+import { transformType, transformResolvedType } from "./types.js";
 import { getModifiers, formatModifiers } from "./modifiers.js";
 import { escapeCSharpKeyword } from "../utils/naming.js";
 import { transpileDecorators } from "./decorators.js";
@@ -14,9 +15,10 @@ import { transpileDecorators } from "./decorators.js";
  */
 export function transpileProperty(
   property: PropertyDeclaration,
-  mappings: ResolvedTypeMappings,
+  context: TranspileContext,
   indent = "    "
 ): string {
+  const mappings = context.mappings;
   const name = property.getName();
   const escapedName = escapeCSharpKeyword(name);
   const typeNode = property.getTypeNode();
@@ -25,8 +27,17 @@ export function transpileProperty(
   const isOptional = property.hasQuestionToken();
   const decorators = property.getDecorators();
 
-  // Get C# type
-  let csharpType = transformType(typeNode, mappings);
+  // Get C# type - use explicit type if available, otherwise infer
+  let csharpType: string;
+  if (typeNode) {
+    csharpType = transformType(typeNode, mappings);
+  } else {
+    // Use TypeScript's type inference
+    const inferredType = property.getType();
+    csharpType = transformResolvedType(inferredType, mappings);
+    // Add warning about inferred type
+    addInferenceWarning(context, "property", name, csharpType, property.getStartLineNumber());
+  }
 
   // Make optional properties nullable
   if (isOptional && !csharpType.endsWith("?")) {
@@ -61,11 +72,11 @@ export function transpileProperty(
  */
 export function transpileClassProperties(
   classDecl: ClassDeclaration,
-  mappings: ResolvedTypeMappings,
+  context: TranspileContext,
   indent = "    "
 ): string[] {
   const properties = classDecl.getProperties();
-  return properties.map((prop) => transpileProperty(prop, mappings, indent));
+  return properties.map((prop) => transpileProperty(prop, context, indent));
 }
 
 /**

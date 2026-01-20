@@ -17,22 +17,29 @@ import {
   ReturnStatement,
   ExpressionStatement,
   Block,
-  Expression
+  Expression,
+  ArrowFunction
 } from "ts-morph";
 import { ResolvedTypeMappings } from "../config/schema.js";
+import { TranspileContext, addInferenceWarning } from "../transpiler.js";
 import { transpileExpression } from "./expressions.js";
-import { transformType } from "./types.js";
+import { transformType, transformResolvedType } from "./types.js";
 import { escapeCSharpKeyword } from "../utils/naming.js";
 
 /**
  * Transpile a TypeScript statement to C#
  */
-export function transpileStatement(stmt: Statement, mappings: ResolvedTypeMappings, indent = "    "): string {
+export function transpileStatement(
+  stmt: Statement,
+  mappings: ResolvedTypeMappings,
+  indent = "    ",
+  context?: TranspileContext
+): string {
   const kind = stmt.getKind();
 
   switch (kind) {
     case SyntaxKind.VariableStatement:
-      return transpileVariableStatement(stmt as VariableStatement, mappings, indent);
+      return transpileVariableStatement(stmt as VariableStatement, mappings, indent, context);
 
     case SyntaxKind.IfStatement:
       return transpileIfStatement(stmt as IfStatement, mappings, indent);
@@ -83,14 +90,20 @@ export function transpileStatement(stmt: Statement, mappings: ResolvedTypeMappin
 /**
  * Transpile variable statement (let, const, var)
  */
-function transpileVariableStatement(stmt: VariableStatement, mappings: ResolvedTypeMappings, indent: string): string {
+function transpileVariableStatement(
+  stmt: VariableStatement,
+  mappings: ResolvedTypeMappings,
+  indent: string,
+  context?: TranspileContext
+): string {
   const declarations = stmt.getDeclarationList();
   const decls = declarations.getDeclarations();
 
   const results: string[] = [];
 
   for (const decl of decls) {
-    const name = escapeCSharpKeyword(decl.getName());
+    const rawName = decl.getName();
+    const name = escapeCSharpKeyword(rawName);
     const typeNode = decl.getTypeNode();
     const initializer = decl.getInitializer();
 
@@ -100,8 +113,18 @@ function transpileVariableStatement(stmt: VariableStatement, mappings: ResolvedT
     if (typeNode) {
       csType = transformType(typeNode, mappings);
     } else if (initializer) {
-      // Use 'var' for type inference when initializer is present
-      csType = "var";
+      // Check if the initializer is an arrow function - need explicit type for C#
+      if (initializer.getKind() === SyntaxKind.ArrowFunction) {
+        const arrowFunc = initializer as ArrowFunction;
+        csType = inferArrowFunctionType(arrowFunc, mappings);
+        // Add warning for arrow function without explicit type
+        if (context) {
+          addInferenceWarning(context, "variable", rawName, csType, decl.getStartLineNumber());
+        }
+      } else {
+        // Use 'var' for type inference when initializer is present
+        csType = "var";
+      }
     } else {
       // No type, no initializer - default to object
       csType = "object";
@@ -121,6 +144,43 @@ function transpileVariableStatement(stmt: VariableStatement, mappings: ResolvedT
   }
 
   return results.join("\n");
+}
+
+/**
+ * Infer the C# delegate type (Action or Func) for an arrow function
+ */
+function inferArrowFunctionType(arrowFunc: ArrowFunction, mappings: ResolvedTypeMappings): string {
+  const params = arrowFunc.getParameters();
+  const returnType = arrowFunc.getReturnType();
+
+  // Get parameter types
+  const paramTypes: string[] = [];
+  for (const param of params) {
+    const paramTypeNode = param.getTypeNode();
+    if (paramTypeNode) {
+      paramTypes.push(transformType(paramTypeNode, mappings));
+    } else {
+      // Try to infer the parameter type
+      const inferredType = param.getType();
+      paramTypes.push(transformResolvedType(inferredType, mappings));
+    }
+  }
+
+  // Get return type
+  const returnCSharp = transformResolvedType(returnType, mappings);
+
+  // Build Func or Action type
+  if (returnCSharp === "void") {
+    if (paramTypes.length === 0) {
+      return "Action";
+    }
+    return `Action<${paramTypes.join(", ")}>`;
+  } else {
+    if (paramTypes.length === 0) {
+      return `Func<${returnCSharp}>`;
+    }
+    return `Func<${paramTypes.join(", ")}, ${returnCSharp}>`;
+  }
 }
 
 /**
@@ -385,6 +445,11 @@ function applyBasicTransformations(text: string): string {
 /**
  * Transpile multiple statements (e.g., method body)
  */
-export function transpileStatements(statements: Statement[], mappings: ResolvedTypeMappings, indent = "    "): string {
-  return statements.map((stmt) => transpileStatement(stmt, mappings, indent)).join("\n");
+export function transpileStatements(
+  statements: Statement[],
+  mappings: ResolvedTypeMappings,
+  indent = "    ",
+  context?: TranspileContext
+): string {
+  return statements.map((stmt) => transpileStatement(stmt, mappings, indent, context)).join("\n");
 }

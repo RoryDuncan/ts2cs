@@ -245,6 +245,7 @@ function transformUnionType(typeNode: TypeNode, mappings: ResolvedTypeMappings):
 
 /**
  * Get the C# type for a TypeScript Type (resolved type, not TypeNode)
+ * This is used for type inference when explicit type annotations are not present.
  */
 export function transformResolvedType(type: Type, mappings: ResolvedTypeMappings): string {
   const text = type.getText();
@@ -288,6 +289,23 @@ export function transformResolvedType(type: Type, mappings: ResolvedTypeMappings
     return formatArrayType("object", mappings.arrayTransform);
   }
 
+  // Check for Promise type (for async methods)
+  const symbol = type.getSymbol();
+  const aliasSymbol = type.getAliasSymbol();
+  const typeName = symbol?.getName() ?? aliasSymbol?.getName() ?? "";
+
+  if (typeName === "Promise") {
+    const typeArgs = type.getTypeArguments();
+    if (typeArgs.length === 1) {
+      const innerType = transformResolvedType(typeArgs[0], mappings);
+      if (innerType === "void") {
+        return "Task";
+      }
+      return `Task<${innerType}>`;
+    }
+    return "Task";
+  }
+
   // Check for union with null/undefined (nullable)
   if (type.isUnion()) {
     const unionTypes = type.getUnionTypes();
@@ -300,8 +318,72 @@ export function transformResolvedType(type: Type, mappings: ResolvedTypeMappings
     }
   }
 
+  // Handle object types (for anonymous objects, return object)
+  if (type.isObject()) {
+    // Check for callable types (functions)
+    const callSignatures = type.getCallSignatures();
+    if (callSignatures.length > 0) {
+      const sig = callSignatures[0];
+      const returnType = sig.getReturnType();
+      const params = sig.getParameters();
+
+      const returnCSharp = transformResolvedType(returnType, mappings);
+      const paramTypes = params.map((p) => {
+        const paramType = p.getTypeAtLocation(p.getValueDeclaration()!);
+        return transformResolvedType(paramType, mappings);
+      });
+
+      if (returnCSharp === "void") {
+        if (paramTypes.length === 0) {
+          return "Action";
+        }
+        return `Action<${paramTypes.join(", ")}>`;
+      } else {
+        if (paramTypes.length === 0) {
+          return `Func<${returnCSharp}>`;
+        }
+        return `Func<${paramTypes.join(", ")}, ${returnCSharp}>`;
+      }
+    }
+
+    // For other object types, use the type name if available
+    if (typeName && typeName !== "__object" && typeName !== "__type") {
+      return typeName;
+    }
+
+    return "object";
+  }
+
   // Fallback
   return text;
+}
+
+/**
+ * Infer the C# return type for a method using TypeScript's type checker.
+ * This handles async methods, returning Task/Task<T> appropriately.
+ * 
+ * @param returnType - The inferred return type from ts-morph
+ * @param isAsync - Whether the method is async
+ * @param mappings - Type mappings configuration
+ */
+export function inferMethodReturnType(returnType: Type, isAsync: boolean, mappings: ResolvedTypeMappings): string {
+  const baseType = transformResolvedType(returnType, mappings);
+
+  // For async methods, the inferred return type is already Promise<T>
+  // We need to convert Promise<T> to Task<T>
+  if (isAsync) {
+    // If the type is already a Promise, transformResolvedType will have converted it to Task
+    if (baseType.startsWith("Task")) {
+      return baseType;
+    }
+    // If not, wrap in Task (this handles cases where TS infers Promise but our transform missed it)
+    if (baseType === "void") {
+      return "Task";
+    }
+    return `Task<${baseType}>`;
+  }
+
+  return baseType;
 }
 
 /**

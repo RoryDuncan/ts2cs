@@ -15,7 +15,11 @@ import {
   PropertyAccessExpression,
   ElementAccessExpression,
   ConditionalExpression,
-  ParenthesizedExpression
+  ParenthesizedExpression,
+  ObjectLiteralExpression,
+  AsExpression,
+  NonNullExpression,
+  SatisfiesExpression
 } from "ts-morph";
 import { ResolvedTypeMappings } from "../config/schema.js";
 import { transformType } from "./types.js";
@@ -101,7 +105,19 @@ export function transpileExpression(expr: Expression | undefined, mappings: Reso
 
     // Object literal
     case SyntaxKind.ObjectLiteralExpression:
-      return transpileObjectLiteral(expr.getText());
+      return transpileObjectLiteralExpression(expr as ObjectLiteralExpression, mappings, indent);
+
+    // Type assertions: x as Type
+    case SyntaxKind.AsExpression:
+      return transpileAsExpression(expr as AsExpression, mappings, indent);
+
+    // Non-null assertion: x!
+    case SyntaxKind.NonNullExpression:
+      return transpileNonNullExpression(expr as NonNullExpression, mappings, indent);
+
+    // Satisfies expression: { ... } satisfies Type (remove the satisfies part)
+    case SyntaxKind.SatisfiesExpression:
+      return transpileSatisfiesExpression(expr as SatisfiesExpression, mappings, indent);
 
     // Default: return as-is
     default:
@@ -324,11 +340,90 @@ function transpileArrayLiteral(text: string): string {
 }
 
 /**
- * Transpile object literal (basic - for anonymous types or dictionaries)
+ * Transpile object literal expression to C# anonymous type
+ * TypeScript: { name: "test", value: 42 }
+ * C#: new { name = "test", value = 42 }
  */
-function transpileObjectLiteral(text: string): string {
-  // For now, pass through - complex object literals need more work
-  return text;
+function transpileObjectLiteralExpression(
+  expr: ObjectLiteralExpression,
+  mappings: ResolvedTypeMappings,
+  indent: string
+): string {
+  const properties = expr.getProperties();
+
+  if (properties.length === 0) {
+    return "new { }";
+  }
+
+  const propStrings: string[] = [];
+
+  for (const prop of properties) {
+    const kind = prop.getKind();
+
+    if (kind === SyntaxKind.PropertyAssignment) {
+      // Standard property: { name: value }
+      const propAssign = prop.asKind(SyntaxKind.PropertyAssignment)!;
+      const name = propAssign.getName();
+      const initializer = propAssign.getInitializer();
+      const value = transpileExpression(initializer, mappings, indent);
+      propStrings.push(`${name} = ${value}`);
+    } else if (kind === SyntaxKind.ShorthandPropertyAssignment) {
+      // Shorthand: { name } -> { name = name }
+      const shorthand = prop.asKind(SyntaxKind.ShorthandPropertyAssignment)!;
+      const name = shorthand.getName();
+      propStrings.push(`${name} = ${escapeCSharpKeyword(name)}`);
+    } else if (kind === SyntaxKind.SpreadAssignment) {
+      // Spread: { ...other } - not directly supported in C# anonymous types
+      // For now, skip with a comment
+      propStrings.push(`/* spread not supported */`);
+    }
+  }
+
+  return `new { ${propStrings.join(", ")} }`;
+}
+
+/**
+ * Transpile 'as' type assertion expression
+ * TypeScript: value as string
+ * C#: value as string (same syntax works in C#)
+ */
+function transpileAsExpression(
+  expr: AsExpression,
+  mappings: ResolvedTypeMappings,
+  indent: string
+): string {
+  const expression = transpileExpression(expr.getExpression(), mappings, indent);
+  const typeNode = expr.getTypeNode();
+  const csType = transformType(typeNode, mappings);
+  return `${expression} as ${csType}`;
+}
+
+/**
+ * Transpile non-null assertion expression
+ * TypeScript: value!
+ * C#: value! (same syntax in C# 8+)
+ */
+function transpileNonNullExpression(
+  expr: NonNullExpression,
+  mappings: ResolvedTypeMappings,
+  indent: string
+): string {
+  const expression = transpileExpression(expr.getExpression(), mappings, indent);
+  return `${expression}!`;
+}
+
+/**
+ * Transpile satisfies expression by removing the satisfies part
+ * TypeScript: { name: "test" } satisfies Dog
+ * C#: new { name = "test" } (type assertion removed)
+ */
+function transpileSatisfiesExpression(
+  expr: SatisfiesExpression,
+  mappings: ResolvedTypeMappings,
+  indent: string
+): string {
+  // The satisfies keyword is for type-checking only, so we just transpile the expression
+  return transpileExpression(expr.getExpression(), mappings, indent);
 }
 
 /**

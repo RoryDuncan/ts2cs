@@ -61,6 +61,8 @@ export interface TranspileContext {
   filePath?: string;
   /** Resolved root namespace */
   rootNamespace: string;
+  /** Warnings collector - transformers can push warnings here */
+  warnings: TranspileWarning[];
 }
 
 /**
@@ -73,8 +75,32 @@ export function createContext(config?: Partial<TranspilerConfig>, filePath?: str
     config: fullConfig,
     mappings: getTypeMappings(fullConfig),
     filePath,
-    rootNamespace: getNamespace(fullConfig)
+    rootNamespace: getNamespace(fullConfig),
+    warnings: []
   };
+}
+
+/**
+ * Add a type inference warning to the context
+ */
+export function addInferenceWarning(
+  context: TranspileContext,
+  kind: "method" | "property" | "variable" | "parameter",
+  name: string,
+  inferredType: string,
+  line?: number
+): void {
+  const messages: Record<typeof kind, string> = {
+    method: `Method '${name}' has no explicit return type - inferred as '${inferredType}'`,
+    property: `Property '${name}' has no explicit type annotation - inferred as '${inferredType}'`,
+    variable: `Variable '${name}' has no explicit type annotation - inferred as '${inferredType}'`,
+    parameter: `Parameter '${name}' has no type annotation - inferred as '${inferredType}'`
+  };
+
+  context.warnings.push({
+    message: messages[kind],
+    line
+  });
 }
 
 /**
@@ -126,7 +152,8 @@ export function transpileSourceFile(sourceFile: SourceFile, context: TranspileCo
  * Transpile a ts-morph SourceFile to C# with full result including warnings
  */
 export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context: TranspileContext): TranspileResult {
-  const warnings: TranspileWarning[] = [];
+  // Use the context's warnings array (transformers will push to this)
+  const warnings = context.warnings;
   const classes = sourceFile.getClasses();
   const enums = sourceFile.getEnums();
   const interfaces = sourceFile.getInterfaces();
@@ -351,12 +378,12 @@ function transpileClass(cls: ClassDeclaration, context: TranspileContext): strin
   // Get class body parts
   const bodyParts: string[] = [];
 
-  // Transpile properties
-  const properties = transpileClassProperties(cls, context.mappings);
+  // Transpile properties (pass context for warnings)
+  const properties = transpileClassProperties(cls, context);
   bodyParts.push(...properties);
 
   // Transpile constructors (includes parameter property fields)
-  const ctorResult = transpileClassConstructors(cls, context.mappings);
+  const ctorResult = transpileClassConstructors(cls, context);
 
   // Add parameter property fields (after explicit properties)
   bodyParts.push(...ctorResult.fields);
@@ -364,12 +391,12 @@ function transpileClass(cls: ClassDeclaration, context: TranspileContext): strin
   // Add constructor declarations
   bodyParts.push(...ctorResult.constructors);
 
-  // Transpile methods
-  const methods = transpileClassMethods(cls, context.mappings);
+  // Transpile methods (pass context for warnings)
+  const methods = transpileClassMethods(cls, context);
   bodyParts.push(...methods);
 
   // Transpile getters/setters
-  const accessors = transpileClassAccessors(cls, context.mappings);
+  const accessors = transpileClassAccessors(cls, context);
   bodyParts.push(...accessors);
 
   // Build class body

@@ -4,6 +4,7 @@
 
 import { ClassDeclaration, Block } from "ts-morph";
 import { ResolvedTypeMappings } from "../config/schema.js";
+import { TranspileContext } from "../transpiler.js";
 import { transformType } from "./types.js";
 import { getModifiers, formatModifiers } from "./modifiers.js";
 import { escapeCSharpKeyword } from "../utils/naming.js";
@@ -27,9 +28,10 @@ interface CSharpProperty {
  */
 export function transpileClassAccessors(
   classDecl: ClassDeclaration,
-  mappings: ResolvedTypeMappings,
+  context: TranspileContext,
   indent = "    "
 ): string[] {
+  const mappings = context.mappings;
   const getters = classDecl.getGetAccessors();
   const setters = classDecl.getSetAccessors();
 
