@@ -6,7 +6,7 @@
   import Tabs from "$lib/components/Tabs.svelte";
   import { buildShareUrl, configToJson, jsonToConfig, type ShareableConfig } from "$lib/share";
   import { replaceState } from "$app/navigation";
-  import type { RouteId, SubmitFunction } from "./$types";
+  import type { RouteId, SubmitFunction } from "./$types.js";
   import { onMount } from "svelte";
 
   // Types

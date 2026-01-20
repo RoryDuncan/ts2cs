@@ -1,0 +1,199 @@
+{
+  "features": [
+    {
+      "feature": "Number[] to List<float>",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdNgAdAO00zUkJjXk3IFcBbAIyIG0BdAbgoBfEIKA",
+      "category": "Arrays"
+    },
+    {
+      "feature": "String[] to List<string>",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdNgAdAO003JQFsY15M0AXQgS3IHMBtAXQDcFAL4hhQA",
+      "category": "Arrays"
+    },
+    {
+      "feature": "Array<T> to List<T>",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdNgAdAO00wEsAXGAWzXkwEFDCU8AeNWw6uQDmAPgDcFAL4hJQA",
+      "category": "Arrays"
+    },
+    {
+      "feature": "Int32Array to int[]",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAIQK4DN8YAnTYAHQDtNMoUAXFeTASUvoGYAmAQWOJQBPANxUAviDFA",
+      "category": "Arrays"
+    },
+    {
+      "feature": "Float64Array to double[]",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAIQK4DN8YAnTYAHQDtNMoUAXFeTAMSQgYDYAWAQWOIoAngG4qAXxDigA",
+      "category": "Arrays"
+    },
+    {
+      "feature": "Async method",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAERQFxQBkIVYAnTYAHQDtNN0BPGsTJEqXAgCgEp5MABTIQAtgEs0MADxo8ZcTQDmAPkq169MjDwBXMnSogo+FEYDcGzAF9a1kNaA",
+      "category": "Async"
+    },
+    {
+      "feature": "Async method with Task (void)",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAERQFxQBkIVYAnTYAHQDtNN0BPGsTABzIjBgwAoBKeJgAKnALYBLNDAA8ANwgSoAPkq16AX1oaQGoA",
+      "category": "Async"
+    },
+    {
+      "feature": "Class with typed property",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdMYAPAFxgDsosA5aGAJgBFNgAdKzTACxhRJyveJioBXALYAjIgG4uAXxCKgA",
+      "category": "Classes"
+    },
+    {
+      "feature": "Class with initialized property",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdMYAPAFxgDsosA5aGAJgBFNgAdKzTACxhRJyveJioBXALYAjIpgC8mAIwAGFQG4uAXxBagA",
+      "category": "Classes"
+    },
+    {
+      "feature": "Class with multiple properties",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdMYAPAFxgDsosA5aGAJgBFNgAdKzTACxhRJyveJioBXALYAjIpgC8mAIwAGFQG4uPKikkxRacoQCWVAOYLMHELhQFC1zd0zG0AQSTGAbvszSIEEgC3IpG4jBOAL4gkUA",
+      "category": "Classes"
+    },
+    {
+      "feature": "Readonly property",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQgOwDMBLAc02AB09NMAnGFKfJAT0wFsUAPABVRZi008THgCu7AEaDMAXkwAWANxUAviFVA",
+      "category": "Classes"
+    },
+    {
+      "feature": "Optional property",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdNgAdAO003IEswBrclAWxgH55M0AXQm8gOYBuCgF8QooA",
+      "category": "Classes"
+    },
+    {
+      "feature": "Simple shape union with kind discriminant",
+      "repl": "N4Igxg9gJgpiBcIAuBPADjABAZQBYEMNMBeAHQDtNMAfTYTAawEtyp5MByMJgJzABsYHANyYe+KEwCuAZ3bkpAWwBGMHpgC+FKrXrNW7DjICOU-DyGiZTAF4x5S1eo3CQGoA",
+      "category": "Discriminated Unions"
+    },
+    {
+      "feature": "Union with type discriminant",
+      "repl": "N4Igxg9gJgpiBcIAuBPADjABAUQG4wDslMBeAHQM0wB9NhNUN5MByMAGwEswBrFgbkwAPZgQCuAWwBGMAE6CUoyTNmYAvhSq16jGMxY8Y6WTADOpgZkOLMppLM4EA5uv4g1QA",
+      "category": "Discriminated Unions"
+    },
+    {
+      "feature": "Union with status discriminant",
+      "repl": "N4Igxg9gJgpiBcIAuBPADjABAJRgZwFcAbJTAXgB0A7TTAH02EzyQEMkC95MByQsMPjw8A3JijtW3FgCcAllQDmmAL7VaDJi3aduPGDJkQZozAFshrRTGlJ5S1SJAqgA",
+      "category": "Discriminated Unions"
+    },
+    {
+      "feature": "Union with multiple properties per variant",
+      "repl": "N4Igxg9gJgpiBcIAuBPADjABAZQBYEMNMBeAHQDtNMAfTYTAawEtyp5MByMJgJzABsYHANyYe+KEwCuAZ3bkpAWwBGMHqLAxySNQA15S1esybtagJoGVazAF8KVWvWat2HHjDBJ85AOaCRTAB3JigkXCsjUVwYJl9cJEi1UQAPJOMUdLthEFsgA",
+      "category": "Discriminated Unions"
+    },
+    {
+      "feature": "Union with shared properties",
+      "repl": "N4Igxg9gJgpiBcIAuBPADjABAZQBYEMNMBeAHQDtNMAfTYTAawEtyp5MByMJgJzABsYHANyZy+ALYx2AZyQ8WAc1E98UJgFcZ7chokAjGD0wBfClVr1mrdhxkBHDfh5DR4qbPlLRMpgC9pMT1DYxNhEBMgA",
+      "category": "Discriminated Unions"
+    },
+    {
+      "feature": "Escape multiple keyword parameters",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAVQC4EsktgAdAO00wAcAnCMGDAChgDcYzd5M1cb8yAcwA0mAEboY3MgFcAtmJg1REMQCsYYLuIgQkMFGQCU3VhHxRMpCpgC+5WyFtA",
+      "category": "Edge Cases"
+    },
+    {
+      "feature": "Not escape non-keyword names",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdNgAdAO00wAsYUkAXa+TcgVwFsAjIgbgqrkUHGCzQNCAS3IBzfuQC+IBUA",
+      "category": "Edge Cases"
+    },
+    {
+      "feature": "Simple enum",
+      "repl": "N4Igxg9gJgpiBcIYDsCuBbABAEQJYCcYwAXXCZTYAHQswFUAHAGhsxwgHdkXaAZGAGbEebAEq4A5gAtiNAL4g5QA",
+      "category": "Enums"
+    },
+    {
+      "feature": "Enum with explicit values",
+      "repl": "N4Igxg9gJgpiBcIYDsCuBbABAZQC4ENdUBnTYAHWU0wAUUoBLZAc0wF5MAGAGkuoEEwuBgDcY7TAEZeVTAGEI6AA4AbGLhhQJAJkoBfEHqA",
+      "category": "Enums"
+    },
+    {
+      "feature": "Enum with mixed values",
+      "repl": "N4Igxg9gJgpiBcIYDsCuBbABABQE4EsICAXAT02AB1lNMAZCAdwBpraBZGKfDTAXkwBWVjUwAJfAHMAFtQC+IOUA",
+      "category": "Enums"
+    },
+    {
+      "feature": "String enum to static class",
+      "repl": "N4Igxg9gJgpiBcIYDsCuBbABAYQgGwgCdNgAdZTTAJRikwF5NSQqBRAEWYBpzKAhPKhgMmIPgBkAqq269MAcUIwUI5vLasAcs3IBfELqA",
+      "category": "Enums"
+    },
+    {
+      "feature": "Const enum as regular enum",
+      "repl": "N4Igxg9gJgpiBc4IDsDOAXABDZBXAtpgCICWATjGOiSpsADrKaYCqADgDSPNEQDuyLk0wAZGADN0Q5gCUSAcwAW6RgF8QqoA",
+      "category": "Enums"
+    },
+    {
+      "feature": "Exported class (public by default)",
+      "repl": "N4Igxg9gJgpiBcIYA8AOEBOAXABGANgIYDOxOACkQJ4wY4pYwB2UZActDAEwAiOwAHSYBfEMKA",
+      "category": "Imports"
+    },
+    {
+      "feature": "Renamed export as original class",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdMYAPAFxgDsosA5aGAJgBFNgBfAHSrIAcIhcuxz4imdJgCyKAJZVcKAsQ4BuEByA",
+      "category": "Imports"
+    },
+    {
+      "feature": "Default export class as regular class",
+      "repl": "N4Igxg9gJgpiBcIYA8AOEBOAXABLAZgIYCuANrmKYQM7U4AKVAnjBjiljAHZR0By0GACYAIjmABfEBKA",
+      "category": "Imports"
+    },
+    {
+      "feature": "Detect Godot types in extends clause and add using statement",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdMYAPAFxgDsosA5aGAJgBFNgAdKgXxG6A",
+      "category": "Imports"
+    },
+    {
+      "feature": "Detect Sprite2D and add using Godot",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAUQHYwFsBPTGADwBcZcosBlABwCcBLKgJgBFNgAdXAL4gBQA",
+      "category": "Imports"
+    },
+    {
+      "feature": "Interface with properties",
+      "repl": "N4Igxg9gJgpiBcICWA7ALjATgMwIZhgAIBJABQBtcBPLQ4AHRUMJVwFsZ5CBnNTVAOYBuRswAWMXOTRiuKAK5sARlhEoAviHVA",
+      "category": "Interfaces"
+    },
+    {
+      "feature": "I prefix if missing",
+      "repl": "N4Igxg9gJgpiBcICWA7ALjATgMwIZhgAIAFAG1wE8tDgAdFQwlXAWxnkIGc1NUBzANz0AviGFA",
+      "category": "Interfaces"
+    },
+    {
+      "feature": "Interface with methods",
+      "repl": "N4Igxg9gJgpiBcICWA7ALjATgMwIZhgAIBJAUXSTQE9DgAdFQwgcxjQDlcBbGACgEp4hAM5pMqZgG4GTYWwASMXABs0AC14A3FQFcYQlDq4AjLIMKaISKNJQBfEHaA",
+      "category": "Interfaces"
+    },
+    {
+      "feature": "Interface with optional properties",
+      "repl": "N4Igxg9gJgpiBcICWA7ALjATgMwIZhgAIBJAYQhWyQHNDgAdFQwlXAWxnkIGc1NVqAbkbNYAIwCu1APxcxECABsYuFMJQBfEBqA",
+      "category": "Interfaces"
+    },
+    {
+      "feature": "Interface extending another interface",
+      "repl": "N4Igxg9gJgpiBcICWA7ALjATgMwIZhgAIBJABQBtcBPLQmADwxSgGcSBRdJNKw4AHRSFCLSJhjxCKAK4BbAEZYA3IIC+IVUA",
+      "category": "Interfaces"
+    },
+    {
+      "feature": "Let with initializer",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQgVwDsAXGAJ02AB0DNMBLAsUmAWxmIAoBKeTANwh0oFarVpIYRTAA9MAXkwBWANyjMAX2rqQ6oA",
+      "category": "Statements"
+    },
+    {
+      "feature": "Const with initializer",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQgVwDsAXGAJ02AB0DNMBzGIgNRSTxgAoBKeTAvALYAjMhWq1akAmiKYACgElMAXkwBmAHQBGACwBucRNKM8pGooM1MAX2rWQ1oA",
+      "category": "Statements"
+    },
+    {
+      "feature": "Typed variable without initializer",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQgVwDsAXGAJ02AB0DNMAHUiMGDACgEp5MA3CASygVqtWkhhFMkQkS4E8AWwBGZANzCRU4pgC8mAIwAGNTUwBfaqZCmgA",
+      "category": "Statements"
+    },
+    {
+      "feature": "=== to ==",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQBYzAGsYAnTYAHQDtNMBLNAUQEcBXFJAChXkytYC2AI1IAaTEN79hpAJS8hECEhgoalGrUwkYAF1YkaKTAF4zEgNzVaAX2o2QNoA",
+      "category": "Statements"
+    },
+    {
+      "feature": "!== to !=",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQBYzAGsYAnTYAHQDtNMBLNAOQgBcBRARwFcUkAKFPExUuAWwBGpADSZxQkRNIBKIeIgQkMFDUo1amEjBZcSNFJgCEAXiuyA3NVoBfak5BOgA",
+      "category": "Statements"
+    }
+  ]
+}

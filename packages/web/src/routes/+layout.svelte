@@ -4,11 +4,13 @@
   import "open-props/normalize.dark.min.css";
   import "../app.css";
   import favicon from "$lib/assets/favicon.svg";
+  import { page } from "$app/state";
 
   let { children } = $props();
 
   const navLinks = [
     { href: "/repl", label: "REPL", external: false },
+    { href: "/features", label: "Features", external: false },
     { href: "/docs", label: "Docs", external: false },
     { href: "https://github.com/RoryDuncan/ts2cs", label: "GitHub", external: true }
   ];
@@ -21,24 +23,26 @@
 </svelte:head>
 
 <div class="app">
-  <header class="site-header">
-    <nav class="container">
-      <a href="/" class="logo">ts2cs</a>
-      <ul class="nav-links">
-        {#each navLinks as link (link.href)}
-          <li>
-            <a
-              href={link.href}
-              target={link.external ? "_blank" : undefined}
-              rel={link.external ? "noopener" : undefined}
-            >
-              {link.label}
-            </a>
-          </li>
-        {/each}
-      </ul>
-    </nav>
-  </header>
+  {#if !page.url.searchParams.has("embed")}
+    <header class="site-header">
+      <nav class="container">
+        <a href="/" class="logo">ts2cs</a>
+        <ul class="nav-links">
+          {#each navLinks as link (link.href)}
+            <li>
+              <a
+                href={link.href}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noopener" : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          {/each}
+        </ul>
+      </nav>
+    </header>
+  {/if}
 
   <main>
     {@render children()}
