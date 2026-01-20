@@ -75,8 +75,9 @@ export const load: PageServerLoad = async ({ params }) => {
   // Check for shared code in URL params or route param
   const { share_code } = params;
 
-  // Transpile the initial code
   let vm: TranspileResultData | undefined = undefined;
+
+  // Transpile the initial code  
   if (typeof share_code !== "undefined") {
     const shareData = decodeShareData(share_code);
     if (shareData) {

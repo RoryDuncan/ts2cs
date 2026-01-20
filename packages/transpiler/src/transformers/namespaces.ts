@@ -114,7 +114,9 @@ export function wrapInNamespace(code: string, namespace: string): string {
   }
 
   // Add namespace block
-  result.push("");
+  if (result.length > 0) {
+    result.push("");
+  }
   result.push(`namespace ${namespace}`);
   result.push("{");
 
