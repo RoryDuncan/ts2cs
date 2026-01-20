@@ -79,7 +79,7 @@ describe("Class Transpilation", () => {
       const input = `class Enemy extends BaseEnemy {
 }`;
 
-      const expected = wrapExpected(`public partial class Enemy : BaseEnemy
+      const expected = wrapExpected(`public class Enemy : BaseEnemy
 {
 }`);
 
@@ -90,7 +90,7 @@ describe("Class Transpilation", () => {
       const input = `class SpecialItem extends Item {
 }`;
 
-      const expected = wrapExpected(`public partial class SpecialItem : Item
+      const expected = wrapExpected(`public class SpecialItem : Item
 {
 }`);
 
@@ -132,7 +132,7 @@ class HelperClass extends BaseHelper {
 {
 }
 
-public partial class HelperClass : BaseHelper
+public class HelperClass : BaseHelper
 {
 }`,
         ["Godot"]
@@ -148,11 +148,11 @@ public partial class HelperClass : BaseHelper
 class Item extends BaseItem {
 }`;
 
-      const expected = wrapExpected(`public partial class Enemy : BaseEnemy
+      const expected = wrapExpected(`public class Enemy : BaseEnemy
 {
 }
 
-public partial class Item : BaseItem
+public class Item : BaseItem
 {
 }`);
 
@@ -165,7 +165,7 @@ public partial class Item : BaseItem
       const input = `class Utility {
 }`;
 
-      const expected = wrapExpected(`public partial class Utility
+      const expected = wrapExpected(`public class Utility
 {
 }`);
 
@@ -179,11 +179,11 @@ public partial class Item : BaseItem
 class UtilityB {
 }`;
 
-      const expected = wrapExpected(`public partial class UtilityA
+      const expected = wrapExpected(`public class UtilityA
 {
 }
 
-public partial class UtilityB
+public class UtilityB
 {
 }`);
 

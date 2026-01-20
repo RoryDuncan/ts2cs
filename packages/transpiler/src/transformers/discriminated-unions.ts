@@ -44,7 +44,7 @@ function generateBaseClass(union: DiscriminatedUnion, mappings: ResolvedTypeMapp
   const lines: string[] = [];
 
   // Class declaration
-  lines.push(`${indent}public abstract partial class ${union.name}`);
+  lines.push(`${indent}public abstract class ${union.name}`);
   lines.push(`${indent}{`);
 
   // Abstract discriminant property
@@ -77,7 +77,7 @@ function generateVariantClass(
   const lines: string[] = [];
 
   // Class declaration
-  lines.push(`${indent}public partial class ${variant.className} : ${union.name}`);
+  lines.push(`${indent}public class ${variant.className} : ${union.name}`);
   lines.push(`${indent}{`);
 
   // Override discriminant property

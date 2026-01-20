@@ -270,7 +270,7 @@ export { Player as MainPlayer };`;
       const input = `export { Enemy } from './enemy';
 class Game {}`;
 
-      const expected = wrapExpected(`public partial class Game
+      const expected = wrapExpected(`public class Game
 {
 }`);
 
@@ -311,7 +311,7 @@ class Game {}`;
       const input = `class Player extends BaseEntity {
 }`;
 
-      const expected = wrapExpected(`public partial class Player : BaseEntity
+      const expected = wrapExpected(`public class Player : BaseEntity
 {
 }`);
 
@@ -368,7 +368,7 @@ class Player {
   color: Color;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public Config.Color color;
 }`);
@@ -382,7 +382,7 @@ class Player {
   target: Enemy;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public Enemy target;
 }`);
@@ -396,7 +396,7 @@ class Menu {
   btn: Button;
 }`;
 
-      const expected = wrapExpected(`public partial class Menu
+      const expected = wrapExpected(`public class Menu
 {
     public Ui.Components.Button btn;
 }`);
@@ -410,7 +410,7 @@ class Player {
   color: Color;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public Config.Color color;
 }`);
@@ -424,7 +424,7 @@ class Player {
   color: Color;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public MyData.Color color;
 }`);
@@ -438,7 +438,7 @@ class Player {
   color: Color;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public MyData.Color color;
 }`);
@@ -476,7 +476,7 @@ class Player {
   color: MyColor;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public Config.MyColor color;
 }`);

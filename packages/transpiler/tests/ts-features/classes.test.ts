@@ -67,7 +67,7 @@ describe("Class Features", () => {
   readonly maxPlayers: number = 4;
 }`;
 
-      const expected = wrapExpected(`public partial class Config
+      const expected = wrapExpected(`public class Config
 {
     public readonly float maxPlayers = 4;
 }`);
@@ -80,7 +80,7 @@ describe("Class Features", () => {
   nickname?: string;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public string? nickname;
 }`);
@@ -93,7 +93,7 @@ describe("Class Features", () => {
   private _health: number = 100;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     private float _health = 100;
 }`);
@@ -106,7 +106,7 @@ describe("Class Features", () => {
   protected health: number = 100;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     protected float health = 100;
 }`);
@@ -136,7 +136,7 @@ describe("Class Features", () => {
 }`;
 
       const expected = wrapExpected(
-        `public partial class Inventory
+        `public class Inventory
 {
     public List<string> items = new List<string>();
 }`,
@@ -151,7 +151,7 @@ describe("Class Features", () => {
   target: Player | null;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public Player? target;
 }`);
@@ -353,7 +353,7 @@ describe("Class Features", () => {
   health: number = 100;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public float health = 100;
 }`);
@@ -366,7 +366,7 @@ describe("Class Features", () => {
   private _health: number = 100;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     private float _health = 100;
 }`);
@@ -379,7 +379,7 @@ describe("Class Features", () => {
   protected health: number = 100;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     protected float health = 100;
 }`);
@@ -392,7 +392,7 @@ describe("Class Features", () => {
   private calculateDamage(): number { return 0; }
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     private float calculateDamage()
     {
@@ -428,7 +428,7 @@ describe("Class Features", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class MathUtils
+      const expected = wrapExpected(`public class MathUtils
 {
     public static float add(float a, float b)
     {
@@ -449,7 +449,7 @@ describe("Class Features", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     private float _health = 100;
     public float health { get => _health; }
@@ -466,7 +466,7 @@ describe("Class Features", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     private float _health = 100;
     public float health { set => _health = value; }
@@ -482,7 +482,7 @@ describe("Class Features", () => {
   set health(value: number) { this._health = value; }
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     private float _health = 100;
     public float health
@@ -519,7 +519,7 @@ describe("Class Features", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Player : Entity
+      const expected = wrapExpected(`public class Player : Entity
 {
     public void update()
     {
@@ -537,7 +537,7 @@ describe("Class Features", () => {
   getHealth(): number { return 0; }
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public void takeDamage(float amount)
     {

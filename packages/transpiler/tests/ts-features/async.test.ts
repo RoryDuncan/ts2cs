@@ -49,7 +49,7 @@ describe("Async/Await Support", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class DataLoader
+      const expected = wrapExpected(`public class DataLoader
 {
     public async Task<string> loadData()
     {
@@ -66,7 +66,7 @@ describe("Async/Await Support", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class DataLoader
+      const expected = wrapExpected(`public class DataLoader
 {
     public async Task process()
     {

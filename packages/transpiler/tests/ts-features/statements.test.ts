@@ -16,7 +16,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Counter
+      const expected = wrapExpected(`public class Counter
 {
     public void increment()
     {
@@ -35,7 +35,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Counter
+      const expected = wrapExpected(`public class Counter
 {
     public float getValue()
     {
@@ -55,7 +55,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Counter
+      const expected = wrapExpected(`public class Counter
 {
     public void process()
     {
@@ -76,7 +76,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Checker
+      const expected = wrapExpected(`public class Checker
 {
     public bool isEqual(float a, float b)
     {
@@ -94,7 +94,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Checker
+      const expected = wrapExpected(`public class Checker
 {
     public bool isNotEqual(float a, float b)
     {
@@ -112,7 +112,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class MathUtils
+      const expected = wrapExpected(`public class MathUtils
 {
     public float power(float @base, float exp)
     {
@@ -134,7 +134,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Guard
+      const expected = wrapExpected(`public class Guard
 {
     public void check(float x)
     {
@@ -159,7 +159,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Guard
+      const expected = wrapExpected(`public class Guard
 {
     public string check(float x)
     {
@@ -188,7 +188,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Counter
+      const expected = wrapExpected(`public class Counter
 {
     public void count()
     {
@@ -212,7 +212,7 @@ describe("Statements", () => {
 }`;
 
       const expected = wrapExpected(
-        `public partial class Iterator
+        `public class Iterator
 {
     public void process(List<string> items)
     {
@@ -240,7 +240,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Runner
+      const expected = wrapExpected(`public class Runner
 {
     public void run()
     {
@@ -264,7 +264,7 @@ describe("Statements", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Logger
+      const expected = wrapExpected(`public class Logger
 {
     public void log(string msg)
     {

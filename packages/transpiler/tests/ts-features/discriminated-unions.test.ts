@@ -21,18 +21,18 @@ describe("Discriminated Unions", () => {
   | { kind: 'circle'; radius: number }
   | { kind: 'square'; size: number };`;
 
-      const expected = wrapExpected(`public abstract partial class Shape
+      const expected = wrapExpected(`public abstract class Shape
 {
     public abstract string Kind { get; }
 }
 
-public partial class Circle : Shape
+public class Circle : Shape
 {
     public override string Kind => "circle";
     public float radius;
 }
 
-public partial class Square : Shape
+public class Square : Shape
 {
     public override string Kind => "square";
     public float size;
@@ -46,19 +46,19 @@ public partial class Square : Shape
   | { type: 'click'; x: number; y: number }
   | { type: 'keypress'; key: string };`;
 
-      const expected = wrapExpected(`public abstract partial class Event
+      const expected = wrapExpected(`public abstract class Event
 {
     public abstract string Type { get; }
 }
 
-public partial class Click : Event
+public class Click : Event
 {
     public override string Type => "click";
     public float x;
     public float y;
 }
 
-public partial class Keypress : Event
+public class Keypress : Event
 {
     public override string Type => "keypress";
     public string key;
@@ -72,18 +72,18 @@ public partial class Keypress : Event
   | { status: 'success'; data: string }
   | { status: 'error'; message: string };`;
 
-      const expected = wrapExpected(`public abstract partial class Result
+      const expected = wrapExpected(`public abstract class Result
 {
     public abstract string Status { get; }
 }
 
-public partial class Success : Result
+public class Success : Result
 {
     public override string Status => "success";
     public string data;
 }
 
-public partial class Error : Result
+public class Error : Result
 {
     public override string Status => "error";
     public string message;
@@ -99,12 +99,12 @@ public partial class Error : Result
   | { kind: 'circle'; radius: number; centerX: number; centerY: number }
   | { kind: 'rectangle'; width: number; height: number; x: number; y: number };`;
 
-      const expected = wrapExpected(`public abstract partial class Shape
+      const expected = wrapExpected(`public abstract class Shape
 {
     public abstract string Kind { get; }
 }
 
-public partial class Circle : Shape
+public class Circle : Shape
 {
     public override string Kind => "circle";
     public float radius;
@@ -112,7 +112,7 @@ public partial class Circle : Shape
     public float centerY;
 }
 
-public partial class Rectangle : Shape
+public class Rectangle : Shape
 {
     public override string Kind => "rectangle";
     public float width;
@@ -129,19 +129,19 @@ public partial class Rectangle : Shape
   | { kind: 'circle'; name: string; radius: number }
   | { kind: 'square'; name: string; size: number };`;
 
-      const expected = wrapExpected(`public abstract partial class Shape
+      const expected = wrapExpected(`public abstract class Shape
 {
     public abstract string Kind { get; }
     public string name;
 }
 
-public partial class Circle : Shape
+public class Circle : Shape
 {
     public override string Kind => "circle";
     public float radius;
 }
 
-public partial class Square : Shape
+public class Square : Shape
 {
     public override string Kind => "square";
     public float size;
@@ -157,31 +157,31 @@ public partial class Square : Shape
   | { kind: 'triangle'; base: number; height: number }
   | { kind: 'rectangle'; width: number; height: number };`;
 
-      const expected = wrapExpected(`public abstract partial class Shape
+      const expected = wrapExpected(`public abstract class Shape
 {
     public abstract string Kind { get; }
 }
 
-public partial class Circle : Shape
+public class Circle : Shape
 {
     public override string Kind => "circle";
     public float radius;
 }
 
-public partial class Square : Shape
+public class Square : Shape
 {
     public override string Kind => "square";
     public float size;
 }
 
-public partial class Triangle : Shape
+public class Triangle : Shape
 {
     public override string Kind => "triangle";
     public float base;
     public float height;
 }
 
-public partial class Rectangle : Shape
+public class Rectangle : Shape
 {
     public override string Kind => "rectangle";
     public float width;
@@ -199,18 +199,18 @@ public partial class Rectangle : Shape
   | { kind: 'polygon'; vertices: Point[] };`;
 
       const expected = wrapExpected(
-        `public abstract partial class Shape
+        `public abstract class Shape
 {
     public abstract string Kind { get; }
 }
 
-public partial class Circle : Shape
+public class Circle : Shape
 {
     public override string Kind => "circle";
     public Point center;
 }
 
-public partial class Polygon : Shape
+public class Polygon : Shape
 {
     public override string Kind => "polygon";
     public List<Point> vertices;
@@ -228,18 +228,18 @@ public partial class Polygon : Shape
   | { code: 1; payload: string }
   | { code: 2; error: string };`;
 
-      const expected = wrapExpected(`public abstract partial class Message
+      const expected = wrapExpected(`public abstract class Message
 {
     public abstract int Code { get; }
 }
 
-public partial class Code1 : Message
+public class Code1 : Message
 {
     public override int Code => 1;
     public string payload;
 }
 
-public partial class Code2 : Message
+public class Code2 : Message
 {
     public override int Code => 2;
     public string error;
@@ -253,18 +253,18 @@ public partial class Code2 : Message
   | { success: true; data: string }
   | { success: false; error: string };`;
 
-      const expected = wrapExpected(`public abstract partial class Result
+      const expected = wrapExpected(`public abstract class Result
 {
     public abstract bool Success { get; }
 }
 
-public partial class SuccessTrue : Result
+public class SuccessTrue : Result
 {
     public override bool Success => true;
     public string data;
 }
 
-public partial class SuccessFalse : Result
+public class SuccessFalse : Result
 {
     public override bool Success => false;
     public string error;
@@ -334,18 +334,18 @@ public partial class SuccessFalse : Result
   | { kind: 'user-created'; userId: string }
   | { kind: 'HTTP_ERROR'; code: number };`;
 
-      const expected = wrapExpected(`public abstract partial class Event
+      const expected = wrapExpected(`public abstract class Event
 {
     public abstract string Kind { get; }
 }
 
-public partial class UserCreated : Event
+public class UserCreated : Event
 {
     public override string Kind => "user-created";
     public string userId;
 }
 
-public partial class HttpError : Event
+public class HttpError : Event
 {
     public override string Kind => "HTTP_ERROR";
     public float code;
@@ -360,18 +360,18 @@ public partial class HttpError : Event
   | { kind: 'namespace'; path: string };`;
 
       // Note: 'class' and 'namespace' become valid class names by capitalization
-      const expected = wrapExpected(`public abstract partial class Token
+      const expected = wrapExpected(`public abstract class Token
 {
     public abstract string Kind { get; }
 }
 
-public partial class Class : Token
+public class Class : Token
 {
     public override string Kind => "class";
     public string name;
 }
 
-public partial class Namespace : Token
+public class Namespace : Token
 {
     public override string Kind => "namespace";
     public string path;
@@ -396,18 +396,18 @@ type Shape =
     Square
 }
 
-public abstract partial class Shape
+public abstract class Shape
 {
     public abstract ShapeKind Kind { get; }
 }
 
-public partial class Circle : Shape
+public class Circle : Shape
 {
     public override ShapeKind Kind => ShapeKind.Circle;
     public float radius;
 }
 
-public partial class Square : Shape
+public class Square : Shape
 {
     public override ShapeKind Kind => ShapeKind.Square;
     public float size;
@@ -430,19 +430,19 @@ public partial class Square : Shape
   | { kind: 'circle'; radius: number; color?: string }
   | { kind: 'square'; size: number; color?: string };`;
 
-      const expected = wrapExpected(`public abstract partial class Shape
+      const expected = wrapExpected(`public abstract class Shape
 {
     public abstract string Kind { get; }
     public string? color;
 }
 
-public partial class Circle : Shape
+public class Circle : Shape
 {
     public override string Kind => "circle";
     public float radius;
 }
 
-public partial class Square : Shape
+public class Square : Shape
 {
     public override string Kind => "square";
     public float size;
@@ -457,18 +457,18 @@ public partial class Square : Shape
   | { kind: 'path'; size: number };`;
 
       const expected = wrapExpected(
-        `public abstract partial class Shape
+        `public abstract class Shape
 {
     public abstract string Kind { get; }
 }
 
-public partial class Polygon : Shape
+public class Polygon : Shape
 {
     public override string Kind => "polygon";
     public List<float> vertices;
 }
 
-public partial class Path : Shape
+public class Path : Shape
 {
     public override string Kind => "path";
     public float size;

@@ -32,7 +32,7 @@ describe("Edge Cases", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Entity
+      const expected = wrapExpected(`public class Entity
 {
     public void setType(string @event)
     {
@@ -48,7 +48,7 @@ describe("Edge Cases", () => {
   }
 }`;
 
-      const expected = wrapExpected(`public partial class Utils
+      const expected = wrapExpected(`public class Utils
 {
     public void process(string @event, float @base, bool @object)
     {
@@ -63,7 +63,7 @@ describe("Edge Cases", () => {
   event: string;
 }`;
 
-      const expected = wrapExpected(`public partial class Handler
+      const expected = wrapExpected(`public class Handler
 {
     public string @event;
 }`);
@@ -76,7 +76,7 @@ describe("Edge Cases", () => {
   namespace: string = "default";
 }`;
 
-      const expected = wrapExpected(`public partial class Config
+      const expected = wrapExpected(`public class Config
 {
     public string @namespace = "default";
 }`);
@@ -90,7 +90,7 @@ describe("Edge Cases", () => {
   name: string;
 }`;
 
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public float health;
     public string name;
@@ -106,7 +106,7 @@ describe("Edge Cases", () => {
   items: string[] = [];
 }`;
 
-      const expected = wrapExpected(`public partial class Inventory
+      const expected = wrapExpected(`public class Inventory
 {
     public string[] items = new string[] { };
 }`);
@@ -119,7 +119,7 @@ describe("Edge Cases", () => {
   scores: number[] = [];
 }`;
 
-      const expected = wrapExpected(`public partial class Stats
+      const expected = wrapExpected(`public class Stats
 {
     public float[] scores = new float[] { };
 }`);
@@ -132,7 +132,7 @@ describe("Edge Cases", () => {
   players: Player[] = [];
 }`;
 
-      const expected = wrapExpected(`public partial class Team
+      const expected = wrapExpected(`public class Team
 {
     public Player[] players = new Player[] { };
 }`);
@@ -145,7 +145,7 @@ describe("Edge Cases", () => {
   values: number[] = [1, 2, 3];
 }`;
 
-      const expected = wrapExpected(`public partial class Config
+      const expected = wrapExpected(`public class Config
 {
     public float[] values = new[] { 1, 2, 3 };
 }`);

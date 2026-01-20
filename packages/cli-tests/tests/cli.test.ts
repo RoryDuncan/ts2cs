@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CLI_PATH = path.resolve(__dirname, "../../transpiler/dist/cli.js");
+const CLI_PATH = path.resolve(__dirname, "../../transpiler/dist/cli.cjs");
 const FIXTURES_PATH = path.resolve(__dirname, "../fixtures");
 
 // Temp output directory for tests

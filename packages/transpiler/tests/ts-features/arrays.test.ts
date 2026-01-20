@@ -17,7 +17,7 @@ describe("Array Transform Configuration", () => {
   scores: number[];
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public List<float> scores;
 }`,
@@ -31,7 +31,7 @@ describe("Array Transform Configuration", () => {
   names: string[];
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public List<string> names;
 }`,
@@ -45,7 +45,7 @@ describe("Array Transform Configuration", () => {
   items: Array<string>;
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public List<string> items;
 }`,
@@ -59,7 +59,7 @@ describe("Array Transform Configuration", () => {
   scores: number[] = [];
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public List<float> scores = new List<float>();
 }`,
@@ -73,7 +73,7 @@ describe("Array Transform Configuration", () => {
   scores: number[] = [1, 2, 3];
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public List<float> scores = new List<float> { 1, 2, 3 };
 }`,
@@ -88,7 +88,7 @@ describe("Array Transform Configuration", () => {
       const input = `class Player {
   scores: number[];
 }`;
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public float[] scores;
 }`);
@@ -99,7 +99,7 @@ describe("Array Transform Configuration", () => {
       const input = `class Player {
   names: string[];
 }`;
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public string[] names;
 }`);
@@ -110,7 +110,7 @@ describe("Array Transform Configuration", () => {
       const input = `class Player {
   items: Array<string>;
 }`;
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public string[] items;
 }`);
@@ -121,7 +121,7 @@ describe("Array Transform Configuration", () => {
       const input = `class Player {
   scores: number[] = [];
 }`;
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public float[] scores = new float[] { };
 }`);
@@ -132,7 +132,7 @@ describe("Array Transform Configuration", () => {
       const input = `class Player {
   scores: number[] = [1, 2, 3];
 }`;
-      const expected = wrapExpected(`public partial class Player
+      const expected = wrapExpected(`public class Player
 {
     public float[] scores = new[] { 1, 2, 3 };
 }`);
@@ -146,7 +146,7 @@ describe("Array Transform Configuration", () => {
   scores: number[];
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public Godot.Collections.Array<float> scores;
 }`,
@@ -160,7 +160,7 @@ describe("Array Transform Configuration", () => {
   names: string[];
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public Godot.Collections.Array<string> names;
 }`,
@@ -174,7 +174,7 @@ describe("Array Transform Configuration", () => {
   scores: number[] = [];
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public Godot.Collections.Array<float> scores = new Godot.Collections.Array<float>();
 }`,
@@ -188,7 +188,7 @@ describe("Array Transform Configuration", () => {
   scores: number[] = [1, 2, 3];
 }`;
       const expected = wrapExpected(
-        `public partial class Player
+        `public class Player
 {
     public Godot.Collections.Array<float> scores = new Godot.Collections.Array<float> { 1, 2, 3 };
 }`,
@@ -204,7 +204,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: Int32Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public int[] data;
 }`);
@@ -215,7 +215,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: Float64Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public double[] data;
 }`);
@@ -226,7 +226,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: Uint8Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public byte[] data;
 }`);
@@ -237,7 +237,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: Float32Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public float[] data;
 }`);
@@ -248,7 +248,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: Int16Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public short[] data;
 }`);
@@ -259,7 +259,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: BigInt64Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public long[] data;
 }`);
@@ -272,7 +272,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: Int32Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public Span<int> data;
 }`);
@@ -283,7 +283,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: Float64Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public Span<double> data;
 }`);
@@ -294,7 +294,7 @@ describe("Array Transform Configuration", () => {
         const input = `class Buffer {
   data: Uint8Array;
 }`;
-        const expected = wrapExpected(`public partial class Buffer
+        const expected = wrapExpected(`public class Buffer
 {
     public Span<byte> data;
 }`);
@@ -309,7 +309,7 @@ describe("Array Transform Configuration", () => {
   values: number[];
   buffer: Int32Array;
 }`;
-      const expected = wrapExpected(`public partial class DataProcessor
+      const expected = wrapExpected(`public class DataProcessor
 {
     public float[] values;
     public Span<int> buffer;
@@ -326,7 +326,7 @@ describe("Array Transform Configuration", () => {
   buffer: Int32Array;
 }`;
       const expected = wrapExpected(
-        `public partial class DataProcessor
+        `public class DataProcessor
 {
     public List<float> values;
     public int[] buffer;
@@ -348,7 +348,7 @@ describe("Array Transform Configuration", () => {
   }
 }`;
       const expected = wrapExpected(
-        `public partial class Utils
+        `public class Utils
 {
     public float sum(List<float> values)
     {
@@ -371,7 +371,7 @@ describe("Array Transform Configuration", () => {
   }
 }`;
       const expected = wrapExpected(
-        `public partial class Utils
+        `public class Utils
 {
     public List<string> getItems()
     {
@@ -390,7 +390,7 @@ describe("Array Transform Configuration", () => {
   data: number[][];
 }`;
       const expected = wrapExpected(
-        `public partial class Matrix
+        `public class Matrix
 {
     public List<List<float>> data;
 }`,
@@ -403,7 +403,7 @@ describe("Array Transform Configuration", () => {
       const input = `class Matrix {
   data: number[][];
 }`;
-      const expected = wrapExpected(`public partial class Matrix
+      const expected = wrapExpected(`public class Matrix
 {
     public float[][] data;
 }`);

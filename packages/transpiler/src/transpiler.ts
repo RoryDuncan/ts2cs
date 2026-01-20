@@ -9,6 +9,7 @@ import { transpileDiscriminatedUnion } from "./transformers/discriminated-unions
 import { isDiscriminatedUnion } from "./transformers/unions.js";
 import { getNamespaceFromPath, wrapInNamespace } from "./transformers/namespaces.js";
 import { analyzeImports } from "./transformers/imports.js";
+import { isGodotClass } from "./godot/classes.js";
 
 /**
  * The project name used in generated output
@@ -271,15 +272,21 @@ function transpileClass(cls: ClassDeclaration, context: TranspileContext): strin
   const baseClass = cls.getExtends();
   const isAbstract = cls.isAbstract();
 
+  // Check if extending a Godot class (partial is needed for Godot source generators)
+  const baseName = baseClass?.getExpression().getText();
+  const extendsGodot = baseName ? isGodotClass(baseName) : false;
+
   // Build class declaration
   let declaration = "public ";
   if (isAbstract) {
     declaration += "abstract ";
   }
-  declaration += `partial class ${className}`;
+  if (extendsGodot) {
+    declaration += "partial ";
+  }
+  declaration += `class ${className}`;
 
   if (baseClass) {
-    const baseName = baseClass.getExpression().getText();
     declaration += ` : ${baseName}`;
   }
 
