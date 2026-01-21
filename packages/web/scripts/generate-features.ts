@@ -87,9 +87,17 @@ function extractTestCases(
 
     const input = inputMatch[1];
 
-    // Check for config in expectCSharp call
+    // Check for config in expectCSharp or transpile calls
     let config: Record<string, unknown> | undefined;
-    const configMatch = body.match(/expectCSharp\s*\(\s*input\s*,\s*expected\s*,\s*(\{[^}]+\})\s*\)/);
+    
+    // Try expectCSharp(input, expected, config) pattern first
+    let configMatch = body.match(/expectCSharp\s*\(\s*input\s*,\s*expected\s*,\s*(\{[^}]+\})\s*\)/);
+    
+    // Also try transpile(input, config) pattern (used in top-level tests)
+    if (!configMatch) {
+      configMatch = body.match(/transpile\s*\(\s*input\s*,\s*(\{[^}]+\})\s*\)/);
+    }
+    
     if (configMatch) {
       try {
         // Parse the config object - it's JS object literal, not JSON
@@ -107,6 +115,15 @@ function extractTestCases(
         const numberTypeMatch = configStr.match(/numberType:\s*["']([^"']+)["']/);
         if (numberTypeMatch) {
           config.numberType = numberTypeMatch[1];
+        }
+        // Top-level config options
+        const enableTopLevelMatch = configStr.match(/enableTopLevel:\s*(true|false)/);
+        if (enableTopLevelMatch) {
+          config.enableTopLevel = enableTopLevelMatch[1] === "true";
+        }
+        const topLevelStrategyMatch = configStr.match(/topLevelStrategy:\s*["']([^"']+)["']/);
+        if (topLevelStrategyMatch) {
+          config.topLevelStrategy = topLevelStrategyMatch[1];
         }
       } catch {
         // Ignore config parse errors

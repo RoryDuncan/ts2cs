@@ -6,41 +6,6 @@
       "category": "Arrays"
     },
     {
-      "feature": "Class implements interface",
-      "repl": "N4Igxg9gJgpiBcICWA7ALjATgMwIZhgAIBJAWQgDdcAjAGyOAB0VDCBbSmACgA95CUAVzbUsAGkIBPfkJFYAlPwoQkUANzMAvs2ZhauAM4HCABX2SshJGwAO9NjHTGylGvUJMWhPgOGjMhAC8hAAMGl7SvnIBwWHMrPHsnLwyfuJSqdGKhMqqHomsaAAWSAYAdDxB3uGshSXlklWSNYTaKJogmkA",
-      "category": "Classes"
-    },
-    {
-      "feature": "Rest parameters (params)",
-      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAGQgczxgCdNgAdAO00yXwAoA6JgWxgxULXkzQBciAlhTwBtALoBKbgDcIAqKUrVqAehU18WFEiSZW7TkswBfSsZDGgA",
-      "category": "Classes"
-    },
-    {
-      "feature": "Top-level function to static class",
-      "repl": "N4Igxg9gJgpiBcIBmBXAdmALgSwmgBAIZRQAUh8+aKAtgEYwBOANPnZdfUwJQe0ON8wADoF8jGJhSMChfAGo2AblEBfUaNQYcefDRQAbHAAcDAT3J8uLNlYG8q-JkNH5xk6bPwAqZWpCqQA",
-      "category": "Functions"
-    },
-    {
-      "feature": "Generic class",
-      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQgOwBcUBLPGAJwB4AVAPk2AB09NMA3FJAVxnk2oDczVsMwBzGAQBqnHgAoAlH2oNRrcpK7kWBABbE0AOg7cYQlpgC+zSyEtA",
-      "category": "Generics"
-    },
-    {
-      "feature": "Generic class with constraint",
-      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAOWjAwhAHYAuKAlkTAE4A8AKpjAB4kxFRYCip5JEngD5MwADpFMmInniZ6AbnGSlmAOYwSuWAAoAlLMZiJkzNQ0BXahJIALcmgB002IuMBfcW5BugA",
-      "category": "Generics"
-    },
-    {
-      "feature": "Generic method",
-      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAVQC4EsktgAdAO00wHMZcAxfAJzVwB4AVAPgAp9cYAtmniZ2AbQC6AShHtMpCpUyNaAV0YU+gtGIAMEgNzlKAX3ImQJoA",
-      "category": "Generics"
-    },
-    {
-      "feature": "@Export decorator",
-      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdMYAPAFxgDsosA5aGAJgBFNgAdKzTAAQFFSABwiFyXHgAsYKJOUnxMVAK4BbAEZFMAXkwBGAAwGA3BMxmBw0eO6Y0QmDCiKVGrbqZHTVAL4gfQA",
-      "category": "Godot"
-    },
-    {
       "feature": "String[] to List<string>",
       "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdNgAdAO003JQFsY15M0AXQgS3IHMBtAXQDcFAL4hhQA",
       "category": "Arrays"
@@ -229,6 +194,71 @@
       "feature": "!== to !=",
       "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYQBYzAGsYAnTYAHQDtNMBLNAOQgBcBRARwFcUkAKFPExUuAWwBGpADSZxQkRNIBKIeIgQkMFDUo1amEjBZcSNFJgCEAXiuyA3NVoBfak5BOgA",
       "category": "Statements"
+    },
+    {
+      "feature": "Literal number const to C# const",
+      "repl": "N4Igxg9gJgpiBc4IDsDOAXABAWQIIA0B9ACQFFcAZAFWMwF5MBGABmYG4QAaJZAMwEsA5glAxkAQwBGAGxhUIABwowAbjGkJ0AJwCuMAL76gA",
+      "category": "Top Level"
+    },
+    {
+      "feature": "Literal string const to C# const",
+      "repl": "N4Igxg9gJgpiBc4IDsDOAXABAcQEoFF8AVASQDltMBeTAHRAAkYAbZiegbhABolkAzAJYBzBKBjIAhgCNmMIhAAOAGRgA3FgnQAnAK4wAvgaA",
+      "category": "Top Level"
+    },
+    {
+      "feature": "Literal boolean const to C# const",
+      "repl": "N4Igxg9gJgpiBc4IDsDOAXABAEQKICEBVAcUwF5N0AnAVxgG4QAaJZAMwEsBzBUGZAIYAjADYwAKhAAOAGRgA3GCITU6AXzVA",
+      "category": "Top Level"
+    },
+    {
+      "feature": "Negative number const to C# const",
+      "repl": "N4Igxg9gJgpiBc4IDsDOAXABAWQJIDkB9ANQEEAZAVQFFMBeTAWgEYBuEAGiWQDMBLAOYJQMZAEMARgBsYAFQgAHcjABuMKQnQAnAK4wAvvqA",
+      "category": "Top Level"
+    },
+    {
+      "feature": "Function call const to static readonly",
+      "repl": "N4Igxg9gJgpiBc4IDsDOAXABAYQPIDkAxASQHFMBeTAcxnWxQDMBLagCgEoBuEAGiWQtqCUDGQBDAEYAbGABUIABwAyMAG4xpCdACcArjAC+hoA",
+      "category": "Top Level"
+    },
+    {
+      "feature": "Correctly infer number as float for property",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAZQC4ty2AB0AnYgO00zUlJkwF5MAWAJgG4zKBfEHoA",
+      "category": "Type Inference Warnings"
+    },
+    {
+      "feature": "Correctly infer string for property",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABVQTxgCdNgAdQ0gO000pQFsZMBeTUkAFxjQ-YG5yVAL4ghQA",
+      "category": "Type Inference Warnings"
+    },
+    {
+      "feature": "Correctly infer boolean for property",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAZRgFzwEsA7Acy2AB0AnS4zTGYlAIyRikwF5M9qBXGAG4adAL4gxQA",
+      "category": "Type Inference Warnings"
+    },
+    {
+      "feature": "Infer Task for async void methods without explicit return type",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAERQFxQBkIVYAnTYAHTKoDtNN0BPOsTABzIjBgwAoAlJRr1GjMjDwBXMnQDcohpgC+SlSBVA",
+      "category": "Type Inference"
+    },
+    {
+      "feature": "Infer Task<string> for async methods returning string",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAERQFxQBkIVYAnTYAHTKoDtNN0BPOsTAcxj1wIAoAlJRr1GjMtwCuZBlRAALGEiQQ5AbhENMAX03aQ2oA",
+      "category": "Type Inference"
+    },
+    {
+      "feature": "Infer Task<float> for async methods returning number",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAYRUsArqgC4QBOmwAOmVQHaaboCedYmkAtgA4HEwAKAJSUa9RozIxiBMgwAsAJgDcYhpgC+ajSA1A",
+      "category": "Type Inference"
+    },
+    {
+      "feature": "Infer Task for async methods with no return statement",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBABQE4TBgwl02AB1dyA7TTdAT2rEyggHUSBrACgEoylGnTqRqaCEhgA6JBADmPciADu3AJbV5yvgG4htTAF8DRkEaA",
+      "category": "Type Inference"
+    },
+    {
+      "feature": "Still use explicit Promise<T> return type when provided",
+      "repl": "N4Igxg9gJgpiBc4A2BDAzmgBAERQFxQBkIVYAnTYAHTKoDtNN0BPOsTJEqXAgCgEp4mAApkIAWwCWaGAB40eMpLoBzAHyUa9RozIw8AVzIMqIKPhSmA3FoaYAvrfsh7QA",
+      "category": "Type Inference"
     }
   ]
 }
