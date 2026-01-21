@@ -13,6 +13,13 @@ import { isGodotClass } from "./godot/classes.js";
 import { transpileStatements } from "./transformers/statements.js";
 import { transformType } from "./transformers/types.js";
 import { escapeCSharpKeyword, toMethodName } from "./utils/naming.js";
+import {
+  collectTopLevelStatements,
+  generateModuleClass,
+  generateAutoloadClass,
+  getModuleClassName,
+  hasTopLevelStatements
+} from "./transformers/top-level.js";
 
 /**
  * The project name used in generated output
@@ -169,19 +176,50 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
     warnings.push({ message: warning });
   }
 
-  // Check for top-level statements
-  const topLevelWarnings = checkTopLevelStatements(sourceFile);
-  warnings.push(...topLevelWarnings);
+  // Handle top-level statements based on config
+  const enableTopLevel = context.config.enableTopLevel ?? true;
+  let collectedTopLevel: ReturnType<typeof collectTopLevelStatements> | null = null;
+  let moduleClassCode: string | null = null;
+  let autoloadClassCode: string | null = null;
+
+  if (enableTopLevel) {
+    // Collect and process top-level statements
+    collectedTopLevel = collectTopLevelStatements(sourceFile, context);
+    warnings.push(...collectedTopLevel.warnings);
+
+    if (hasTopLevelStatements(collectedTopLevel)) {
+      // Get existing class names to avoid conflicts
+      const existingClassNames = new Set(classes.map((c) => c.getName() ?? ""));
+
+      // Generate module class name
+      const moduleClassName = getModuleClassName(context.filePath ?? "source.ts", existingClassNames);
+
+      // Generate the module class
+      moduleClassCode = generateModuleClass(moduleClassName, collectedTopLevel, context);
+
+      // Generate autoload class if strategy is 'autoload'
+      if (context.config.topLevelStrategy === "autoload") {
+        autoloadClassCode = generateAutoloadClass(moduleClassName, context.filePath ?? "source.ts");
+      }
+    }
+  } else {
+    // Legacy behavior: warn and skip top-level statements
+    const topLevelWarnings = checkTopLevelStatements(sourceFile);
+    warnings.push(...topLevelWarnings);
+  }
 
   // Find discriminated unions from type aliases
   const discriminatedUnions = typeAliases.filter((ta) => isDiscriminatedUnion(ta));
 
+  // Check if we have any content to output
+  const hasModuleContent = moduleClassCode !== null;
   if (
     classes.length === 0 &&
     enums.length === 0 &&
     interfaces.length === 0 &&
     discriminatedUnions.length === 0 &&
-    functions.length === 0
+    functions.length === 0 &&
+    !hasModuleContent
   ) {
     // Empty file or no declarations - return header if enabled, otherwise empty
     return { code: context.config.includeHeader ? GENERATED_HEADER : "", warnings };
@@ -230,6 +268,12 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
     parts.push("");
   }
 
+  // Add module class (top-level variables/constants/expressions)
+  if (moduleClassCode) {
+    parts.push(moduleClassCode);
+    parts.push("");
+  }
+
   // Transpile top-level functions as a static class
   if (functions.length > 0) {
     const staticClassCode = transpileTopLevelFunctions(functions, context);
@@ -252,6 +296,12 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
     parts.push("");
   }
 
+  // Add autoload class if generated (for autoload strategy)
+  if (autoloadClassCode) {
+    parts.push(autoloadClassCode);
+    parts.push("");
+  }
+
   // Remove trailing empty line and join
   while (parts.length > 0 && parts[parts.length - 1] === "") {
     parts.pop();
@@ -265,7 +315,8 @@ export function transpileSourceFileWithWarnings(sourceFile: SourceFile, context:
     enums.length > 0 ||
     interfaces.length > 0 ||
     discriminatedUnions.length > 0 ||
-    functions.length > 0;
+    functions.length > 0 ||
+    hasModuleContent;
   if (hasContent) {
     const namespace = context.filePath
       ? getNamespaceFromPath(context.filePath, context.rootNamespace)

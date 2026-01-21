@@ -20,7 +20,7 @@ export {
   getTypeMappings,
   getNamespace
 } from "./config/schema.js";
-export type { TranspilerConfig, TypeMappings, NumberType } from "./config/schema.js";
+export type { TranspilerConfig, TypeMappings, NumberType, TopLevelStrategy } from "./config/schema.js";
 
 // Re-export transpile functions for quick usage
 export {

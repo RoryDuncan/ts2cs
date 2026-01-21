@@ -24,6 +24,15 @@ export const TypedArrayTransformSchema = v.picklist(["array", "span"]);
 export type TypedArrayTransform = v.InferOutput<typeof TypedArrayTransformSchema>;
 
 /**
+ * Top-level initialization strategy - controls how top-level code is initialized
+ * - 'lazy': Static constructor (runs on first access to any static member)
+ * - 'autoload': Generate a Godot Node class for explicit initialization order
+ * - 'manual': Generate public Init() method (user must call explicitly)
+ */
+export const TopLevelStrategySchema = v.picklist(["lazy", "autoload", "manual"]);
+export type TopLevelStrategy = v.InferOutput<typeof TopLevelStrategySchema>;
+
+/**
  * Type mappings from TypeScript types to C# types
  */
 export const TypeMappingsSchema = v.object({
@@ -93,7 +102,23 @@ export const TranspilerConfigSchema = v.object({
    * - true: Include the default auto-generated header
    * - false: No header in output (default)
    */
-  includeHeader: v.optional(v.boolean(), false)
+  includeHeader: v.optional(v.boolean(), false),
+
+  /**
+   * Whether to enable top-level statement support.
+   * - true: Wrap top-level variables and expressions in a module class (default)
+   * - false: Warn and skip top-level statements (legacy behavior)
+   */
+  enableTopLevel: v.optional(v.boolean(), true),
+
+  /**
+   * Strategy for initializing top-level code.
+   * Only applies when enableTopLevel is true.
+   * - 'lazy': Static constructor (runs on first access) (default)
+   * - 'autoload': Generate Godot Node class for explicit init order
+   * - 'manual': Generate public Init() method (user must call)
+   */
+  topLevelStrategy: v.optional(TopLevelStrategySchema, "lazy")
 });
 
 /**

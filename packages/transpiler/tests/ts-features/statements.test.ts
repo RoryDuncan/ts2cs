@@ -341,10 +341,10 @@ public class Player
   });
 
   describe("Top-level statement warnings", () => {
-    it("should warn about top-level variable declaration", () => {
+    it("should warn about top-level variable declaration when enableTopLevel is false", () => {
       const project = new Project({ useInMemoryFileSystem: true });
       const sourceFile = project.createSourceFile("test.ts", `const x = 5;`);
-      const context = createContext();
+      const context = createContext({ enableTopLevel: false });
 
       const result = transpileSourceFileWithWarnings(sourceFile, context);
 
@@ -352,10 +352,10 @@ public class Player
       expect(result.warnings[0].message).toContain("Top-level statement skipped");
     });
 
-    it("should warn about top-level expression statement", () => {
+    it("should warn about top-level expression statement when enableTopLevel is false", () => {
       const project = new Project({ useInMemoryFileSystem: true });
       const sourceFile = project.createSourceFile("test.ts", `console.log("hello");`);
-      const context = createContext();
+      const context = createContext({ enableTopLevel: false });
 
       const result = transpileSourceFileWithWarnings(sourceFile, context);
 

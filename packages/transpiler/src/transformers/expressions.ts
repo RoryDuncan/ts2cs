@@ -186,7 +186,34 @@ function transpilePrefixUnaryExpression(
   indent: string
 ): string {
   const operand = transpileExpression(expr.getOperand(), mappings, indent);
-  const op = expr.getOperatorToken();
+  const opKind = expr.getOperatorToken();
+  
+  // Map operator token kinds to strings
+  let op: string;
+  switch (opKind) {
+    case SyntaxKind.MinusToken:
+      op = "-";
+      break;
+    case SyntaxKind.PlusToken:
+      op = "+";
+      break;
+    case SyntaxKind.ExclamationToken:
+      op = "!";
+      break;
+    case SyntaxKind.TildeToken:
+      op = "~";
+      break;
+    case SyntaxKind.PlusPlusToken:
+      op = "++";
+      break;
+    case SyntaxKind.MinusMinusToken:
+      op = "--";
+      break;
+    default:
+      // Fallback to getting the text from the expression
+      op = expr.getText().replace(operand, "").trim();
+  }
+  
   return `${op}${operand}`;
 }
 
